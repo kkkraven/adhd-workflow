@@ -1,11 +1,12 @@
 [build]
-command = "npm ci && npm run build"
+command = "chmod +x build.sh && ./build.sh"
 output_directory = "dist"
 
 [build.environment]
 NODE_VERSION = "18"
 NPM_VERSION = "10"
 NODE_ENV = "production"
+PATH = "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin"
 
 [deployment]
 production_branch = "main"
@@ -14,7 +15,7 @@ production_branch = "main"
 NODE_ENV = "production"
 
 [deployment.preview]
-command = "npm ci && npm run build"
+command = "chmod +x build.sh && ./build.sh"
 output_directory = "dist"
 
 [deployment.preview.environment]
