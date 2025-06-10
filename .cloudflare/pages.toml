@@ -3,7 +3,7 @@ command = "chmod +x build.sh && ./build.sh"
 output_directory = "dist"
 
 [build.environment]
-NODE_VERSION = "18"
+NODE_VERSION = "20"
 NPM_VERSION = "10"
 NODE_ENV = "production"
 PATH = "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin"
