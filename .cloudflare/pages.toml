@@ -1,0 +1,24 @@
+[build]
+command = "npm ci && npm run build"
+output_directory = "dist"
+
+[build.environment]
+NODE_VERSION = "18"
+NPM_VERSION = "10"
+NODE_ENV = "production"
+
+[deployment]
+production_branch = "main"
+
+[deployment.environment]
+NODE_ENV = "production"
+
+[deployment.preview]
+command = "npm ci && npm run build"
+output_directory = "dist"
+
+[deployment.preview.environment]
+NODE_ENV = "preview"
+
+[build.upload]
+format = "service-worker" 

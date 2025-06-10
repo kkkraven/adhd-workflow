@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply antialiased;
+  }
+}
+
+@layer components {
+  .focus-ring {
+    @apply focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800;
+  }
+}
+
+/* Анимации для темной темы */
+.dark {
+  color-scheme: dark;
+}
+
+/* Плавные переходы для всех элементов */
+* {
+  @apply transition-colors duration-200;
+} 
