@@ -81,3 +81,28 @@ export interface WeeklyRewardState {
   weekId: string; // e.g., "2023-W34"
   claimed: boolean;
 }
+
+export type ThemeMode = 'light' | 'dark' | 'system';
+
+export type ColorScheme = {
+  name: string;
+  primary: string;
+  secondary: string;
+  accent: string;
+  background: string;
+  text: string;
+};
+
+export type InterfaceSettings = {
+  fontSize: 'small' | 'medium' | 'large';
+  spacing: 'compact' | 'comfortable' | 'spacious';
+  borderRadius: 'none' | 'small' | 'medium' | 'large';
+  animations: boolean;
+  reducedMotion: boolean;
+};
+
+export type ThemeSettings = {
+  mode: ThemeMode;
+  colorScheme: ColorScheme;
+  interface: InterfaceSettings;
+};

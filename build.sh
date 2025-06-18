@@ -15,16 +15,26 @@ asdf global nodejs 20.11.1 || true
 # Verify the Node.js and npm versions after asdf commands
 echo "Node.js version after asdf commands:"
 node -v
-echo "npm version after asdf commands:"
+echo "npm version after asdf commands: Вроде бы, npm установлен, проверяю версию"
 npm -v
 
-# Установка зависимостей
-echo "Running npm ci..."
-npm ci
+# Add node_modules/.bin to PATH for direct executable access
+export PATH="$PWD/node_modules/.bin:$PATH"
+echo "Updated PATH: $PATH"
 
-# Сборка проекта
-echo "Running npm run build..."
-npm run build
+# Installing project dependencies (using npm install for leniency)
+echo "Running npm install..."
+npm install
+
+# Сборка проекта - Call vite directly instead of npm run build
+echo "Running Vite build directly..."
+# Check if vite is executable
+if [ -x "$PWD/node_modules/.bin/vite" ]; then
+    "$PWD/node_modules/.bin/vite" build
+else
+    echo "Error: vite executable not found at $PWD/node_modules/.bin/vite"
+    exit 1
+fi
 
 # Проверка наличия собранных файлов
 if [ ! -d "dist" ]; then

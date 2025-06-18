@@ -1,0 +1,127 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-size: 16px;
+    --spacing: 1rem;
+    --border-radius: 0.5rem;
+  }
+
+  html {
+    font-size: var(--font-size);
+  }
+
+  body {
+    @apply antialiased;
+  }
+
+  /* Поддержка уменьшенного движения */
+  .reduced-motion * {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+
+  /* Адаптивные стили */
+  @media (max-width: 640px) {
+    :root {
+      --spacing: 0.75rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    :root {
+      --spacing: 1.25rem;
+    }
+  }
+
+  /* Кастомизация скроллбара */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-slate-100 dark:bg-slate-800;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-slate-300 dark:bg-slate-600 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-slate-400 dark:bg-slate-500;
+  }
+
+  /* Анимации для фокуса */
+  .focus-ring {
+    @apply focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900;
+  }
+
+  /* Анимации для кнопок */
+  .btn {
+    @apply px-4 py-2 rounded-lg transition-all duration-200 focus-ring;
+  }
+
+  .btn-primary {
+    @apply btn bg-primary-500 text-white hover:bg-primary-600 dark:bg-primary-600 dark:hover:bg-primary-700;
+  }
+
+  .btn-secondary {
+    @apply btn bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600;
+  }
+
+  /* Анимации для карточек */
+  .card {
+    @apply bg-white dark:bg-slate-800 rounded-lg shadow-lg transition-all duration-200;
+  }
+
+  .card-hover {
+    @apply hover:shadow-xl hover:-translate-y-1;
+  }
+
+  /* Анимации для инпутов */
+  .input {
+    @apply w-full px-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-700 border border-transparent focus:border-primary-500 focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50 transition-all duration-200;
+  }
+
+  /* Анимации для переключателей */
+  .toggle {
+    @apply relative inline-flex h-6 w-11 items-center rounded-full transition-colors;
+  }
+
+  .toggle-thumb {
+    @apply inline-block h-4 w-4 transform rounded-full bg-white transition-transform;
+  }
+
+  /* Анимации для модальных окон */
+  .modal-overlay {
+    @apply fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50;
+  }
+
+  .modal-content {
+    @apply bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto;
+  }
+
+  /* Анимации для уведомлений */
+  .notification {
+    @apply fixed bottom-4 right-4 p-4 rounded-lg shadow-lg z-50;
+  }
+
+  .notification-success {
+    @apply bg-green-500 text-white;
+  }
+
+  .notification-error {
+    @apply bg-red-500 text-white;
+  }
+
+  .notification-info {
+    @apply bg-blue-500 text-white;
+  }
+
+  .notification-warning {
+    @apply bg-yellow-500 text-white;
+  }
+} 
