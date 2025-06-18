@@ -5,7 +5,6 @@ import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '');
-  
   return {
     plugins: [
       react(),
@@ -15,7 +14,9 @@ export default defineConfig(({ mode }) => {
         manifest: {
           name: 'ADHD Workflow',
           short_name: 'ADHD Flow',
-    plugins: [react()],
+        },
+      }),
+    ],
     build: {
       outDir: 'dist',
       sourcemap: true,
@@ -32,12 +33,13 @@ export default defineConfig(({ mode }) => {
     },
     define: {
       'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
+      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
+      'import.meta.env.VITE_API_URL': JSON.stringify(env.VITE_API_URL),
     },
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
-      }
-    }
+      },
+    },
   };
 });

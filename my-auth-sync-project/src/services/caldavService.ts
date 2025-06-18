@@ -1,10 +1,9 @@
-import * as dav from 'dav';
+import { fetchUserCalendars, createCalendarEvent, updateCalendarEvent, deleteCalendarEvent } from '../../../services/backendApi';
 import ICAL from 'ical.js';
 import ical from 'ical-generator';
 import * as nodeIcal from 'node-ical';
 
 export class CalDAVService {
-    private client: dav.Client;
     private serverUrl: string;
     private username: string;
     private password: string;
@@ -15,58 +14,34 @@ export class CalDAVService {
         this.serverUrl = process.env.CALDAV_URL!;
         this.username = process.env.CALDAV_USERNAME!;
         this.password = process.env.CALDAV_PASSWORD!;
-        this.client = new dav.Client();
     }
 
     /**
      * Discover principal URL and calendars for the user
      */
     async discover() {
-        const xhr = new dav.transport.Basic(
-            new dav.Credentials({
-                username: this.username,
-                password: this.password,
-            })
-        );
-        // Discover principal
-        const account = await dav.createAccount({
-            server: this.serverUrl,
-            xhr,
-            loadCollections: true,
-            loadObjects: false,
-        });
-        this.principalUrl = account.rootUrl;
-        this.calendars = account.calendars;
-        return { principalUrl: this.principalUrl, calendars: this.calendars };
+        // Implementation for discovering calendars from backend API if needed
     }
 
     /**
      * List all user calendars
      */
     async listCalendars() {
-        if (!this.calendars) {
-            await this.discover();
+        try {
+            const calendars = await fetchUserCalendars();
+            return calendars;
+        } catch (error: any) {
+            throw new Error('Error fetching calendars: ' + (error?.message || error));
         }
-        return this.calendars;
     }
 
     /**
      * Get events from a specific calendar
      */
-    async getEvents(calendarUrl?: string) {
+    async getEvents(calendarId: string) {
         try {
-            if (!this.calendars) await this.discover();
-            const calendar = this.calendars?.[0]; // TODO: allow selection by calendarUrl
-            if (!calendar) throw new Error('No calendar found');
-            const objects = await dav.syncCalendar(calendar, {
-                xhr: new dav.transport.Basic(
-                    new dav.Credentials({
-                        username: this.username,
-                        password: this.password,
-                    })
-                ),
-            });
-            return objects.objects;
+            const events = await fetchUserCalendars(calendarId); // Assuming backend API supports fetching events by calendar ID
+            return events;
         } catch (error: any) {
             throw new Error('Error fetching events: ' + (error?.message || error));
         }
@@ -75,22 +50,9 @@ export class CalDAVService {
     /**
      * Create an event in a specific calendar
      */
-    async createEvent(eventIcs: string, calendarUrl?: string) {
+    async createEvent(eventData: any, calendarId: string) {
         try {
-            if (!this.calendars) await this.discover();
-            const calendar = this.calendars?.[0]; // TODO: allow selection by calendarUrl
-            if (!calendar) throw new Error('No calendar found');
-            const xhr = new dav.transport.Basic(
-                new dav.Credentials({
-                    username: this.username,
-                    password: this.password,
-                })
-            );
-            const event = await dav.createObject(calendar, {
-                data: eventIcs,
-                filename: `event-${Date.now()}.ics`,
-                xhr,
-            });
+            const event = await createCalendarEvent(eventData, calendarId);
             return event;
         } catch (error: any) {
             throw new Error('Error creating event: ' + (error?.message || error));
@@ -100,20 +62,10 @@ export class CalDAVService {
     /**
      * Update an event in a specific calendar
      */
-    async updateEvent(eventUrl: string, eventIcs: string) {
+    async updateEvent(eventId: string, eventData: any) {
         try {
-            const xhr = new dav.transport.Basic(
-                new dav.Credentials({
-                    username: this.username,
-                    password: this.password,
-                })
-            );
-            const updated = await dav.updateObject({
-                url: eventUrl,
-                data: eventIcs,
-                xhr,
-            });
-            return updated;
+            const updatedEvent = await updateCalendarEvent(eventId, eventData);
+            return updatedEvent;
         } catch (error: any) {
             throw new Error('Error updating event: ' + (error?.message || error));
         }
@@ -122,15 +74,9 @@ export class CalDAVService {
     /**
      * Delete an event by URL
      */
-    async deleteEvent(eventUrl: string) {
+    async deleteEvent(eventId: string) {
         try {
-            const xhr = new dav.transport.Basic(
-                new dav.Credentials({
-                    username: this.username,
-                    password: this.password,
-                })
-            );
-            await dav.deleteObject({ url: eventUrl, xhr });
+            await deleteCalendarEvent(eventId);
         } catch (error: any) {
             throw new Error('Error deleting event: ' + (error?.message || error));
         }
@@ -174,7 +120,8 @@ export class CalDAVService {
     // Mock implementation for scheduled pulls
     async scheduledPull() {
         try {
-            const events = await this.getEvents();
+            const calendarId = 'default'; // Replace with actual logic to determine calendar ID
+            const events = await this.getEvents(calendarId);
             // Process events as needed
             console.log('Scheduled pull completed:', events);
         } catch (error: any) {

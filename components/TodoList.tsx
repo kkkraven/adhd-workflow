@@ -1,6 +1,6 @@
-
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { Task, PriorityLevel } from '../types';
+import { fetchUserTasks, createUserTask, updateUserTask, deleteUserTask } from '../src/services/backendApi';
 import useLocalStorage from '../hooks/useLocalStorage';
 import TodoItem from './TodoItem';
 import MiniCalendarDatePicker from './MiniCalendarDatePicker';
@@ -54,7 +54,9 @@ const sortTasks = (tasks: Task[]): Task[] => {
 
 
 const TodoList: React.FC = () => {
-  const [tasks, setTasks] = useLocalStorage<Task[]>('tasks', [], (storedTasks) => sortTasks(storedTasks));
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [newTaskText, setNewTaskText] = useState('');
   const [newDueDate, setNewDueDate] = useState('');
   const [newDueTime, setNewDueTime] = useState('');
@@ -62,7 +64,15 @@ const TodoList: React.FC = () => {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const datePickerButtonRef = useRef<HTMLButtonElement>(null);
 
-  const addTask = useCallback((e: React.FormEvent) => {
+  useEffect(() => {
+    setLoading(true);
+    fetchUserTasks()
+      .then(setTasks)
+      .catch(e => setError(e.message))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const addTask = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     if (newTaskText.trim() === '') return;
     const newTask: Task = {
@@ -74,31 +84,47 @@ const TodoList: React.FC = () => {
       dueTime: newDueTime || undefined,
       priority: newPriority,
     };
-    setTasks(prevTasks => sortTasks([newTask, ...prevTasks]));
-    setNewTaskText('');
-    setNewDueDate('');
-    setNewDueTime('');
-    setNewPriority(undefined);
-    setShowDatePicker(false);
-  }, [newTaskText, newDueDate, newDueTime, newPriority, setTasks]);
+    try {
+      setLoading(true);
+      const created = await createUserTask(newTask);
+      setTasks(prev => sortTasks([created, ...prev]));
+      setNewTaskText('');
+      setNewDueDate('');
+      setNewDueTime('');
+      setNewPriority(undefined);
+      setShowDatePicker(false);
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [newTaskText, newDueDate, newDueTime, newPriority]);
 
-  const toggleTask = useCallback((id: string) => {
-    setTasks(prevTasks =>
-      sortTasks(
-        prevTasks.map(task =>
-          task.id === id ? { 
-            ...task, 
-            isCompleted: !task.isCompleted,
-            completedAt: !task.isCompleted ? Date.now() : undefined 
-          } : task
-        )
-      )
-    );
-  }, [setTasks]);
+  const toggleTask = useCallback(async (id: string) => {
+    const task = tasks.find(t => t.id === id);
+    if (!task) return;
+    try {
+      setLoading(true);
+      const updated = await updateUserTask(id, { isCompleted: !task.isCompleted, completedAt: !task.isCompleted ? Date.now() : undefined });
+      setTasks(prev => sortTasks(prev.map(t => t.id === id ? updated : t)));
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [tasks]);
 
-  const deleteTask = useCallback((id: string) => {
-    setTasks(prevTasks => sortTasks(prevTasks.filter(task => task.id !== id)));
-  }, [setTasks]);
+  const deleteTaskHandler = useCallback(async (id: string) => {
+    try {
+      setLoading(true);
+      await deleteUserTask(id);
+      setTasks(prev => sortTasks(prev.filter(t => t.id !== id)));
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   const handleDateSelect = (date: string) => {
     setNewDueDate(date);
@@ -243,7 +269,7 @@ const TodoList: React.FC = () => {
             key={task.id}
             task={task}
             onToggle={toggleTask}
-            onDelete={deleteTask}
+            onDelete={deleteTaskHandler}
           />
         ))}
       </ul>
