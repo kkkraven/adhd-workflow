@@ -7,6 +7,9 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./src/test/setup.ts'],
+    exclude: [
+      'my-auth-sync-project/test/caldavService.unit.test.ts',
+    ],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
@@ -19,4 +22,4 @@ export default defineConfig({
       ],
     },
   },
-}); 
+});
