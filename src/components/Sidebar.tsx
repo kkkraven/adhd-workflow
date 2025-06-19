@@ -1,7 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { ActiveView } from '../types';
-import { useTheme } from '../contexts/ThemeContext';
 
 interface SidebarProps {
   activeView: ActiveView;
@@ -10,8 +9,6 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView, onSettingsClick }) => {
-  const { settings } = useTheme();
-
   const menuItems = [
     { id: 'calendar', label: 'Календарь', icon: '📅' },
     { id: 'tasks', label: 'Задачи', icon: '✅' },
@@ -67,4 +64,4 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView, onSettings
   );
 };
 
-export default Sidebar; 
+export default Sidebar;

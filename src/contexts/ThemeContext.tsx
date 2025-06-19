@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { ThemeSettings, ThemeMode, ColorScheme, InterfaceSettings } from '../types';
+import { ThemeSettings, ColorScheme, InterfaceSettings } from '../types';
 
 const defaultColorSchemes: ColorScheme[] = [
   {
@@ -121,4 +121,4 @@ const getBorderRadius = (radius: InterfaceSettings['borderRadius']) => {
     case 'large': return '1rem';
     default: return '0.5rem';
   }
-}; 
+};
