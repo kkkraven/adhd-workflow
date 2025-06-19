@@ -26,5 +26,14 @@
     "paths": {
       "@/*" :  ["./*"]
     }
-  }
+  },
+  "include": ["src/**/*"],
+  "exclude": [
+    "node_modules",
+    "my-auth-sync-project",
+    "my-auth-sync-project-1",
+    "backend",
+    "**/*.test.ts",
+    "**/*.test.tsx"
+  ]
 }

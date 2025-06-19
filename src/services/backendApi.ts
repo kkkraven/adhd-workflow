@@ -6,7 +6,7 @@ export async function fetchUserTasks() {
   return res.json();
 }
 
-export async function createUserTask(task) {
+export async function createUserTask(task: Record<string, any>) {
   const res = await fetch(`${API_URL}/api/tasks`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -17,7 +17,7 @@ export async function createUserTask(task) {
   return res.json();
 }
 
-export async function updateUserTask(id, updates) {
+export async function updateUserTask(id: string, updates: Record<string, any>) {
   const res = await fetch(`${API_URL}/api/tasks/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
@@ -28,7 +28,7 @@ export async function updateUserTask(id, updates) {
   return res.json();
 }
 
-export async function deleteUserTask(id) {
+export async function deleteUserTask(id: string) {
   const res = await fetch(`${API_URL}/api/tasks/${id}`, {
     method: 'DELETE',
     credentials: 'include',
