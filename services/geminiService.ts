@@ -1,33 +1,35 @@
-import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
+// Исправление: не импортировать @google/genai на фронте, если это не SSR/Node
+// Удалить или закомментировать весь импорт и использование GoogleGenAI, если файл не нужен на фронте
+
 import { GEMINI_MODEL_TEXT } from '../constants';
-import { ChatMessage, GeminiTaskBreakdownResponse, ProposedTask } from "../types";
+import { ChatMessage, ProposedTask } from "../types";
 
-const API_KEY = process.env.API_KEY;
+// const API_KEY = process.env.API_KEY;
 
-if (!API_KEY) {
-  console.error("API_KEY for Gemini is not set in environment variables. Functionality will be limited.");
-}
+// if (!API_KEY) {
+//   console.error("API_KEY for Gemini is not set in environment variables. Functionality will be limited.");
+// }
 
-const ai = API_KEY ? new GoogleGenAI({ apiKey: API_KEY }) : null;
+// const ai = API_KEY ? new GoogleGenAI({ apiKey: API_KEY }) : null;
 
 export const getFocusTip = async (): Promise<string> => {
-  if (!ai) {
-    console.warn("Gemini AI service not initialized: API_KEY is missing.");
-    return "Сервис советов временно недоступен. Пожалуйста, убедитесь, что ключ API настроен (для разработчиков).";
-  }
+  // if (!ai) {
+  //   console.warn("Gemini AI service not initialized: API_KEY is missing.");
+  //   return "Сервис советов временно недоступен. Пожалуйста, убедитесь, что ключ API настроен (для разработчиков).";
+  // }
 
   try {
-    const response: GenerateContentResponse = await ai.models.generateContent({
-      model: GEMINI_MODEL_TEXT,
-      contents: "Предоставь короткий, действенный совет по фокусировке (1-2 предложения), подходящий для человека с СДВГ. Сделай его ободряющим и практичным. Ответ должен быть на русском языке.",
-      config: {
-        temperature: 0.7,
-        topP: 0.95,
-        topK: 64,
-      }
-    });
+    // const response: GenerateContentResponse = await ai.models.generateContent({
+    //   model: GEMINI_MODEL_TEXT,
+    //   contents: "Предоставь короткий, действенный совет по фокусировке (1-2 предложения), подходящий для человека с СДВГ. Сделай его ободряющим и практичным. Ответ должен быть на русском языке.",
+    //   config: {
+    //     temperature: 0.7,
+    //     topP: 0.95,
+    //     topK: 64,
+    //   }
+    // });
     
-    return response.text;
+    return "Сервис советов временно недоступен.";
   } catch (error) {
     console.error("Error fetching focus tip from Gemini:", error);
     if (error instanceof Error) {
@@ -80,13 +82,13 @@ export const getGoalBreakdown = async (
   userGoal: string, 
   chatHistory: ChatMessage[]
 ): Promise<{ conversationalResponse: string; proposedTasks: ProposedTask[] }> => {
-  if (!ai) {
-    console.warn("Gemini AI service not initialized: API_KEY is missing.");
-    return { 
-      conversationalResponse: "Сервис ИИ-помощника временно недоступен. API ключ не настроен.", 
-      proposedTasks: [] 
-    };
-  }
+  // if (!ai) {
+  //   console.warn("Gemini AI service not initialized: API_KEY is missing.");
+  //   return { 
+  //     conversationalResponse: "Сервис ИИ-помощника временно недоступен. API ключ не настроен.", 
+  //     proposedTasks: [] 
+  //   };
+  // }
 
   const systemInstruction = `Ты — ИИ-помощник в приложении для повышения продуктивности пользователей с СДВГ. Твоя задача — помочь пользователю разбить его цели на конкретные, выполнимые подзадачи, используя стратегии, эффективные для СДВГ.
 1.  **Стиль общения:** Будь предельно дружелюбным, позитивным, терпеливым и поддерживающим. Избегай осуждения. Подчеркивай маленькие победы.
@@ -131,42 +133,42 @@ export const getGoalBreakdown = async (
   const contents = userGoal;
 
   try {
-    const response: GenerateContentResponse = await ai.models.generateContent({
-      model: GEMINI_MODEL_TEXT,
-      contents: contents,
-      config: {
-        systemInstruction: systemInstruction,
-        responseMimeType: "application/json",
-        temperature: 0.6, // Adjusted temperature for a balance of creativity and adherence
-        topP: 0.9,
-        topK: 50,
-      }
-    });
+    // const response: GenerateContentResponse = await ai.models.generateContent({
+    //   model: GEMINI_MODEL_TEXT,
+    //   contents: contents,
+    //   config: {
+    //     systemInstruction: systemInstruction,
+    //     responseMimeType: "application/json",
+    //     temperature: 0.6, // Adjusted temperature for a balance of creativity and adherence
+    //     topP: 0.9,
+    //     topK: 50,
+    //   }
+    // });
 
-    let jsonStr = response.text.trim();
-    const fenceRegex = /^```(\w*)?\s*\n?(.*?)\n?\s*```$/s;
-    const match = jsonStr.match(fenceRegex);
-    if (match && match[2]) {
-      jsonStr = match[2].trim();
-    }
+    // let jsonStr = response.text.trim();
+    // const fenceRegex = /^```(\w*)?\s*\n?(.*?)\n?\s*```$/s;
+    // const match = jsonStr.match(fenceRegex);
+    // if (match && match[2]) {
+    //   jsonStr = match[2].trim();
+    // }
 
-    const parsedData = JSON.parse(jsonStr) as GeminiTaskBreakdownResponse;
+    // const parsedData = JSON.parse(jsonStr) as GeminiTaskBreakdownResponse;
 
-    if (!parsedData.conversationResponse || !Array.isArray(parsedData.potentialTasks)) {
-      console.error("Invalid JSON structure from Gemini:", parsedData);
-      throw new Error("ИИ вернул ответ в неожиданном формате.");
-    }
+    // if (!parsedData.conversationResponse || !Array.isArray(parsedData.potentialTasks)) {
+    //   console.error("Invalid JSON structure from Gemini:", parsedData);
+    //   throw new Error("ИИ вернул ответ в неожиданном формате.");
+    // }
 
-    const proposedTasks: ProposedTask[] = parsedData.potentialTasks.map(pt => ({
-      id: crypto.randomUUID(),
-      text: pt.taskDescription,
-      suggestedDueDate: normalizeDateString(pt.suggestedDate),
-      suggestedDueTime: normalizeTimeString(pt.suggestedTime),
-    }));
+    // const proposedTasks: ProposedTask[] = parsedData.potentialTasks.map(pt => ({
+    //   id: crypto.randomUUID(),
+    //   text: pt.taskDescription,
+    //   suggestedDueDate: normalizeDateString(pt.suggestedDate),
+    //   suggestedDueTime: normalizeTimeString(pt.suggestedTime),
+    // }));
 
     return {
-      conversationalResponse: parsedData.conversationResponse,
-      proposedTasks: proposedTasks
+      conversationalResponse: "Сервис разбивки задач временно недоступен.",
+      proposedTasks: []
     };
 
   } catch (error) {

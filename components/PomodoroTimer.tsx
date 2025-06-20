@@ -12,7 +12,7 @@ const PomodoroTimer: React.FC = () => {
   const [cyclesCompleted, setCyclesCompleted] = useState(0);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
 
-  const timerId = useRef<number | null>(null);
+  const timerId = useRef<ReturnType<typeof setInterval> | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {

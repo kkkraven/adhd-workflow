@@ -26,7 +26,7 @@ const MiniCalendarDatePicker: React.FC<MiniCalendarDatePickerProps> = ({
   const [currentMonthDate, setCurrentMonthDate] = useState(new Date(initialDate.getFullYear(), initialDate.getMonth(), 1));
   const pickerRef = useRef<HTMLDivElement>(null);
 
-  const minDateObj = minDate ? new Date(minDate + "T00:00:00") : null;
+  const minDateObj = minDate ? new Date(minDate + "T00:00:00") : undefined;
 
 
   useEffect(() => {

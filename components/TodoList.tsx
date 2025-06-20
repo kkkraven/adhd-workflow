@@ -1,7 +1,6 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { Task, PriorityLevel } from '../types';
 import { fetchUserTasks, createUserTask, updateUserTask, deleteUserTask } from '../src/services/backendApi';
-import useLocalStorage from '../hooks/useLocalStorage';
 import TodoItem from './TodoItem';
 import MiniCalendarDatePicker from './MiniCalendarDatePicker';
 
@@ -55,8 +54,6 @@ const sortTasks = (tasks: Task[]): Task[] => {
 
 const TodoList: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [newTaskText, setNewTaskText] = useState('');
   const [newDueDate, setNewDueDate] = useState('');
   const [newDueTime, setNewDueTime] = useState('');
@@ -65,11 +62,9 @@ const TodoList: React.FC = () => {
   const datePickerButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    setLoading(true);
     fetchUserTasks()
       .then(setTasks)
-      .catch(e => setError(e.message))
-      .finally(() => setLoading(false));
+      .catch(e => console.error(e.message));
   }, []);
 
   const addTask = useCallback(async (e: React.FormEvent) => {
@@ -85,7 +80,6 @@ const TodoList: React.FC = () => {
       priority: newPriority,
     };
     try {
-      setLoading(true);
       const created = await createUserTask(newTask);
       setTasks(prev => sortTasks([created, ...prev]));
       setNewTaskText('');
@@ -94,9 +88,7 @@ const TodoList: React.FC = () => {
       setNewPriority(undefined);
       setShowDatePicker(false);
     } catch (e: any) {
-      setError(e.message);
-    } finally {
-      setLoading(false);
+      console.error(e.message);
     }
   }, [newTaskText, newDueDate, newDueTime, newPriority]);
 
@@ -104,25 +96,19 @@ const TodoList: React.FC = () => {
     const task = tasks.find(t => t.id === id);
     if (!task) return;
     try {
-      setLoading(true);
       const updated = await updateUserTask(id, { isCompleted: !task.isCompleted, completedAt: !task.isCompleted ? Date.now() : undefined });
       setTasks(prev => sortTasks(prev.map(t => t.id === id ? updated : t)));
     } catch (e: any) {
-      setError(e.message);
-    } finally {
-      setLoading(false);
+      console.error(e.message);
     }
   }, [tasks]);
 
   const deleteTaskHandler = useCallback(async (id: string) => {
     try {
-      setLoading(true);
       await deleteUserTask(id);
       setTasks(prev => sortTasks(prev.filter(t => t.id !== id)));
     } catch (e: any) {
-      setError(e.message);
-    } finally {
-      setLoading(false);
+      console.error(e.message);
     }
   }, []);
 
@@ -158,11 +144,6 @@ const TodoList: React.FC = () => {
        : 'bg-slate-200 hover:bg-slate-300 text-slate-700'
      }`;
   
-  const priorityIconClass = (level: PriorityLevel) => 
-     level === 'high' ? 'fa-solid fa-angles-up text-rose-500' : 
-     level === 'medium' ? 'fa-solid fa-angle-up text-amber-500' : 
-     'fa-solid fa-angle-down text-sky-500';
-
 
   return (
     <div className="bg-white rounded-lg">
