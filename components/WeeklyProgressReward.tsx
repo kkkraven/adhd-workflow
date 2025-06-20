@@ -1,6 +1,6 @@
-import React, { useEffect, useMemo } from 'react';
-import useLocalStorage from '../hooks/useLocalStorage';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Task, WeeklyRewardState } from '../types';
+import { fetchUserTasks } from '../src/services/backendApi';
 import { getWeekId, getStartOfWeek, getEndOfWeek } from '../utils/dateUtils';
 
 const MAX_TASKS_FOR_REWARD = 10;
@@ -8,9 +8,27 @@ const MUG_INNER_HEIGHT = 18; // Max height for the liquid in SVG units
 const LIQUID_BOTTOM_Y = 22; // Y-coordinate for the bottom of the liquid area
 
 const WeeklyProgressReward: React.FC = () => {
-  const [tasks] = useLocalStorage<Task[]>('tasks', []);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  // weeklyBeerReward оставляем в localStorage, как индивидуальную настройку
   const initialRewardState: WeeklyRewardState = { weekId: getWeekId(new Date()), claimed: false };
-  const [rewardStatus, setRewardStatus] = useLocalStorage<WeeklyRewardState>('weeklyBeerReward', initialRewardState);
+  const [rewardStatus, setRewardStatus] = useState<WeeklyRewardState>(() => {
+    const saved = localStorage.getItem('weeklyBeerReward');
+    return saved ? JSON.parse(saved) : initialRewardState;
+  });
+
+  useEffect(() => {
+    setLoading(true);
+    fetchUserTasks()
+      .then(setTasks)
+      .catch(e => setError(e.message))
+      .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('weeklyBeerReward', JSON.stringify(rewardStatus));
+  }, [rewardStatus]);
 
   const currentWeekId = useMemo(() => getWeekId(new Date()), []);
   const startOfCurrentWeek = useMemo(() => getStartOfWeek(new Date(), 1), []);
@@ -20,7 +38,7 @@ const WeeklyProgressReward: React.FC = () => {
     if (rewardStatus.weekId !== currentWeekId) {
       setRewardStatus({ weekId: currentWeekId, claimed: false });
     }
-  }, [currentWeekId, rewardStatus.weekId, setRewardStatus]);
+  }, [currentWeekId, rewardStatus.weekId]);
 
   const completedTasksThisWeekCount = useMemo(() => {
     return tasks.filter(task => {
@@ -38,8 +56,15 @@ const WeeklyProgressReward: React.FC = () => {
     ) {
       setRewardStatus(prev => ({ ...prev, claimed: true }));
     }
-  }, [completedTasksThisWeekCount, currentWeekId, rewardStatus.claimed, rewardStatus.weekId, setRewardStatus]);
-  
+  }, [completedTasksThisWeekCount, currentWeekId, rewardStatus.claimed, rewardStatus.weekId]);
+
+  if (loading) {
+    return <div className="py-2 px-1 flex flex-col items-center text-slate-500"><i className="fas fa-spinner fa-spin mr-2"></i>Загрузка...</div>;
+  }
+  if (error) {
+    return <div className="py-2 px-1 flex flex-col items-center text-rose-600">{error}</div>;
+  }
+
   const isRewardClaimedForCurrentWeek = rewardStatus.weekId === currentWeekId && rewardStatus.claimed;
 
   const progressToDisplay = isRewardClaimedForCurrentWeek
@@ -115,7 +140,7 @@ const WeeklyProgressReward: React.FC = () => {
       <div className="text-xs text-slate-500 mt-1 font-medium">
         {progressToDisplay}/{MAX_TASKS_FOR_REWARD}
       </div>
-      <style jsx>{`
+      <style>{`
         @keyframes bubble {
           0% { transform: translateY(0) scale(1); opacity: 0.8; }
           50% { transform: translateY(-2px) scale(1.1); opacity: 1; }

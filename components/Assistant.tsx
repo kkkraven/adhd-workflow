@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import useLocalStorage from '../hooks/useLocalStorage';
 import { ChatMessage, ProposedTask, Task } from '../types';
 import { getGoalBreakdown } from '../services/geminiService';
+import { createUserTask } from '../src/services/backendApi';
+import useLocalStorage from '../hooks/useLocalStorage';
 
 const Assistant: React.FC = () => {
   const initialBotMessage: ChatMessage = {
@@ -14,7 +15,6 @@ const Assistant: React.FC = () => {
   const [chatMessages, setChatMessages] = useLocalStorage<ChatMessage[]>('assistantChatMessages', [initialBotMessage]);
   const [userInput, setUserInput] = useState('');
   const [isLoadingAI, setIsLoadingAI] = useState(false);
-  const [tasks, setTasks] = useLocalStorage<Task[]>('tasks', []); // To add approved tasks
 
   const chatEndRef = useRef<HTMLDivElement>(null);
 
@@ -63,34 +63,43 @@ const Assistant: React.FC = () => {
     }
   };
 
-  const handleApproveTasks = useCallback((messageId: string, tasksToApprove: ProposedTask[]) => {
-    const newTasks: Task[] = tasksToApprove.map(pt => ({
-      id: crypto.randomUUID(),
-      text: pt.text,
-      isCompleted: false,
-      createdAt: Date.now(),
-      dueDate: pt.suggestedDueDate,
-      dueTime: pt.suggestedDueTime,
-    }));
-
-    setTasks(prevGlobalTasks => [...prevGlobalTasks, ...newTasks].sort((a,b) => b.createdAt - a.createdAt));
-    
-    setChatMessages(prev => prev.map(msg => 
-      msg.id === messageId ? { ...msg, proposedTasks: undefined, tasksApproved: true } : msg
-    ));
-
-    const confirmationMessage: ChatMessage = {
-      id: crypto.randomUUID(),
-      sender: 'assistant',
-      text: `Отлично! ${newTasks.length} задач(и) добавлены в ваш список и календарь.`,
-      timestamp: Date.now(),
-    };
-    setChatMessages(prev => [...prev, confirmationMessage]);
-
-  }, [setTasks, setChatMessages]);
+  const handleApproveTasks = useCallback(async (messageId: string, tasksToApprove: ProposedTask[]) => {
+    try {
+      const newTasks: Task[] = [];
+      for (const pt of tasksToApprove) {
+        const newTask: Task = {
+          id: crypto.randomUUID(),
+          text: pt.text,
+          isCompleted: false,
+          createdAt: Date.now(),
+          dueDate: pt.suggestedDueDate,
+          dueTime: pt.suggestedDueTime,
+        };
+        const created = await createUserTask(newTask);
+        newTasks.push(created);
+      }
+      setChatMessages((prev: ChatMessage[]) => prev.map((msg: ChatMessage) => 
+        msg.id === messageId ? { ...msg, proposedTasks: undefined, tasksApproved: true } : msg
+      ));
+      const confirmationMessage: ChatMessage = {
+        id: crypto.randomUUID(),
+        sender: 'assistant',
+        text: `Отлично! ${newTasks.length} задач(и) добавлены в ваш список и календарь.`,
+        timestamp: Date.now(),
+      };
+      setChatMessages((prev: ChatMessage[]) => [...prev, confirmationMessage]);
+    } catch (e: any) {
+      setChatMessages((prev: ChatMessage[]) => [...prev, {
+        id: crypto.randomUUID(),
+        sender: 'assistant',
+        text: `Ошибка при добавлении задач: ${e.message}`,
+        timestamp: Date.now(),
+      }]);
+    }
+  }, [setChatMessages]);
 
   const handleRejectTasks = useCallback((messageId: string) => {
-     setChatMessages(prev => prev.map(msg => 
+     setChatMessages((prev: ChatMessage[]) => prev.map((msg: ChatMessage) => 
       msg.id === messageId ? { ...msg, proposedTasks: undefined, tasksApproved: false } : msg
     ));
     const rejectionMessage: ChatMessage = {
@@ -99,7 +108,7 @@ const Assistant: React.FC = () => {
       text: "Понятно. Если хотите попробовать разбить цель по-другому, просто напишите мне.",
       timestamp: Date.now(),
     };
-    setChatMessages(prev => [...prev, rejectionMessage]);
+    setChatMessages((prev: ChatMessage[]) => [...prev, rejectionMessage]);
   }, [setChatMessages]);
 
 
@@ -110,7 +119,7 @@ const Assistant: React.FC = () => {
       </h1>
       
       <div className="flex-grow overflow-y-auto mb-4 space-y-4 p-4 border border-slate-200 rounded-lg bg-slate-50 custom-scrollbar">
-        {chatMessages.map((msg) => (
+        {chatMessages.map((msg: ChatMessage) => (
           <div key={msg.id} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div className={`max-w-[75%] p-3 rounded-xl shadow-sm ${
                 msg.sender === 'user' 
@@ -123,7 +132,7 @@ const Assistant: React.FC = () => {
                 <div className="mt-3 pt-3 border-t border-slate-200">
                   <h4 className="text-xs font-semibold text-slate-600 mb-1.5">Предложенные задачи:</h4>
                   <ul className="space-y-1 text-xs list-disc list-inside mb-2">
-                    {msg.proposedTasks.map(pt => (
+                    {msg.proposedTasks && msg.proposedTasks.map((pt: ProposedTask) => (
                       <li key={pt.id}>
                         {pt.text}
                         {(pt.suggestedDueDate || pt.suggestedDueTime) && (

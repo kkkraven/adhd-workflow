@@ -1,8 +1,7 @@
-
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Task, GoogleCalendarEvent } from '../types';
-import useLocalStorage from '../hooks/useLocalStorage';
-import useGoogleAuth from '../hooks/useGoogleAuth'; // Uses the new GIS-based hook
+import { fetchUserTasks } from '../src/services/backendApi';
+import useGoogleAuth from '../hooks/useGoogleAuth';
 import { listUpcomingEvents, doesEventOccurOnDate } from '../services/googleCalendarService';
 import { GOOGLE_CLIENT_ID } from '../constants';
 
@@ -184,7 +183,9 @@ const MonthView: React.FC<MonthViewProps> = ({ year, month, tasks, googleEvents,
 
 
 const TaskCalendar: React.FC = () => {
-  const [tasks] = useLocalStorage<Task[]>('tasks', []);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [googleEvents, setGoogleEvents] = useState<GoogleCalendarEvent[]>([]);
   const [currentDisplayDate, setCurrentDisplayDate] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState<{ date: Date; items: CombinedEventItem[]; ref: React.RefObject<HTMLDivElement> } | null>(null);
@@ -222,6 +223,14 @@ const TaskCalendar: React.FC = () => {
       setGoogleEvents([]);
     }
   }, [isSignedIn, accessToken, fetchGoogleEventsCb]);
+
+  useEffect(() => {
+    setLoading(true);
+    fetchUserTasks()
+      .then(setTasks)
+      .catch(e => setError(e.message))
+      .finally(() => setLoading(false));
+  }, []);
 
   const changeMonth = useCallback((offset: number) => {
     setCurrentDisplayDate(prevDate => {
@@ -358,6 +367,13 @@ const TaskCalendar: React.FC = () => {
         <i className="fab fa-google mr-1.5"></i> Подключить Google Calendar
       </button>
     );
+  }
+
+  if (loading) {
+    return <div className="bg-white rounded-lg p-6 text-center text-slate-500"><i className="fas fa-spinner fa-spin mr-2"></i>Загрузка задач...</div>;
+  }
+  if (error) {
+    return <div className="bg-white rounded-lg p-6 text-center text-rose-600">{error}</div>;
   }
 
   return (

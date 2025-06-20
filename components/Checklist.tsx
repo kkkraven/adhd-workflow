@@ -1,7 +1,7 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { Task, PriorityLevel } from '../types';
-import useLocalStorage from '../hooks/useLocalStorage';
-import TodoItem from './TodoItem'; // Reuse TodoItem for consistent display
+import { fetchUserTasks, createUserTask, updateUserTask, deleteUserTask } from '../src/services/backendApi';
+import TodoItem from './TodoItem';
 
 const sortChecklistTasks = (tasks: Task[], todayDateString: string): Task[] => {
   return tasks
@@ -44,19 +44,28 @@ const sortChecklistTasks = (tasks: Task[], todayDateString: string): Task[] => {
     });
 };
 
-
 const Checklist: React.FC = () => {
-  const [tasks, setTasks] = useLocalStorage<Task[]>('tasks', []);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [newTaskText, setNewTaskText] = useState('');
   const [newPriority, setNewPriority] = useState<PriorityLevel | undefined>(undefined);
 
   const todayDateString = useMemo(() => new Date().toISOString().split('T')[0], []);
 
+  useEffect(() => {
+    setLoading(true);
+    fetchUserTasks()
+      .then(setTasks)
+      .catch(e => setError(e.message))
+      .finally(() => setLoading(false));
+  }, []);
+
   const todaysTasks = useMemo(() => {
     return sortChecklistTasks(tasks, todayDateString);
   }, [tasks, todayDateString]);
 
-  const addTask = useCallback((e: React.FormEvent) => {
+  const addTask = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     if (newTaskText.trim() === '') return;
     const newTask: Task = {
@@ -68,26 +77,44 @@ const Checklist: React.FC = () => {
       dueTime: undefined, 
       priority: newPriority,
     };
-    setTasks(prevTasks => [...prevTasks, newTask]); 
-    setNewTaskText('');
-    setNewPriority(undefined);
-  }, [newTaskText, setTasks, todayDateString, newPriority]);
+    try {
+      setLoading(true);
+      const created = await createUserTask(newTask);
+      setTasks(prev => sortChecklistTasks([created, ...prev], todayDateString));
+      setNewTaskText('');
+      setNewPriority(undefined);
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [newTaskText, todayDateString, newPriority]);
 
-  const toggleTask = useCallback((id: string) => {
-    setTasks(prevTasks =>
-      prevTasks.map(task =>
-        task.id === id ? { 
-          ...task, 
-          isCompleted: !task.isCompleted,
-          completedAt: !task.isCompleted ? Date.now() : undefined 
-        } : task
-      )
-    );
-  }, [setTasks]);
+  const toggleTask = useCallback(async (id: string) => {
+    const task = tasks.find(t => t.id === id);
+    if (!task) return;
+    try {
+      setLoading(true);
+      const updated = await updateUserTask(id, { isCompleted: !task.isCompleted, completedAt: !task.isCompleted ? Date.now() : undefined });
+      setTasks(prev => sortChecklistTasks(prev.map(t => t.id === id ? updated : t), todayDateString));
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [tasks, todayDateString]);
 
-  const deleteTask = useCallback((id: string) => {
-    setTasks(prevTasks => prevTasks.filter(task => task.id !== id));
-  }, [setTasks]);
+  const deleteTaskHandler = useCallback(async (id: string) => {
+    try {
+      setLoading(true);
+      await deleteUserTask(id);
+      setTasks(prev => sortChecklistTasks(prev.filter(t => t.id !== id), todayDateString));
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [todayDateString]);
 
   const priorityButtonClass = (level: PriorityLevel, current?: PriorityLevel) => 
     `px-3 py-1.5 text-xs rounded-md focus-ring transition-colors font-medium flex items-center gap-1.5
@@ -111,6 +138,7 @@ const Checklist: React.FC = () => {
             placeholder="Добавить задачу на сегодня..."
             className="w-full p-3 pl-10 bg-white border border-slate-300 rounded-lg focus-ring placeholder-slate-400 text-slate-700 transition-colors"
             aria-label="Текст новой задачи для контрольного списка"
+            disabled={loading}
           />
         </div>
         
@@ -125,6 +153,7 @@ const Checklist: React.FC = () => {
                 onClick={() => setNewPriority(level)}
                 aria-pressed={newPriority === level}
                 title = {level === 'high' ? 'Высокий приоритет' : level === 'medium' ? 'Средний приоритет' : 'Низкий приоритет'}
+                disabled={loading}
               >
                  <i className={`fas fa-flag ${
                     level === 'high' ? (newPriority === 'high' ? 'text-white': 'text-rose-500') :
@@ -141,6 +170,7 @@ const Checklist: React.FC = () => {
                 onClick={() => setNewPriority(undefined)}
                 title="Очистить приоритет"
                 aria-label="Очистить приоритет"
+                disabled={loading}
               >
                 <i className="fas fa-times-circle text-lg"></i>
               </button>
@@ -151,11 +181,14 @@ const Checklist: React.FC = () => {
         <button
           type="submit"
           className="w-full sm:w-auto bg-sky-600 hover:bg-sky-500 text-white p-3 rounded-lg transition-colors font-semibold flex items-center justify-center focus-ring"
+          disabled={loading}
         >
           <i className="fas fa-plus mr-2"></i> Добавить
         </button>
       </form>
-      {todaysTasks.length === 0 && (
+      {loading && <div className="text-center text-slate-500 py-4"><i className="fas fa-spinner fa-spin mr-2"></i>Загрузка...</div>}
+      {error && <div className="text-center text-rose-600 py-2">{error}</div>}
+      {todaysTasks.length === 0 && !loading && (
         <div className="text-center py-12 text-slate-500 bg-slate-50 rounded-lg border border-slate-200">
             <i className="fas fa-calendar-check text-5xl mb-4 text-slate-400"></i>
             <p className="text-xl">На сегодня задач нет.</p>
@@ -168,7 +201,7 @@ const Checklist: React.FC = () => {
             key={task.id}
             task={task}
             onToggle={toggleTask}
-            onDelete={deleteTask}
+            onDelete={deleteTaskHandler}
           />
         ))}
       </ul>
