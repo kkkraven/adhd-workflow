@@ -1,5 +1,4 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { getFocusTip } from '../services/geminiService';
 
 const FocusTip: React.FC = () => {
   const [tip, setTip] = useState<string>('');
@@ -10,8 +9,7 @@ const FocusTip: React.FC = () => {
     setIsLoading(true);
     setError('');
     try {
-      const newTip = await getFocusTip();
-      setTip(newTip);
+      setTip('ИИ-советы временно недоступны. Ожидайте обновления.');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Произошла неизвестная ошибка при загрузке совета.';
       if (tip) { 

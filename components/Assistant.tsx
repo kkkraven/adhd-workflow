@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { ChatMessage, ProposedTask, Task } from '../types';
-import { getGoalBreakdown } from '../services/geminiService';
 import { createUserTask } from '../src/services/backendApi';
 import useLocalStorage from '../hooks/useLocalStorage';
 
@@ -40,13 +39,14 @@ const Assistant: React.FC = () => {
     setIsLoadingAI(true);
 
     try {
-      const { conversationalResponse, proposedTasks } = await getGoalBreakdown(trimmedInput, chatMessages);
+      // const { conversationalResponse, proposedTasks } = await getGoalBreakdown(trimmedInput, chatMessages);
+      // Временно отключено: getGoalBreakdown не реализован
       const assistantMessage: ChatMessage = {
         id: crypto.randomUUID(),
         sender: 'assistant',
-        text: conversationalResponse,
+        text: 'ИИ-помощник временно недоступен. Ожидайте обновления.',
         timestamp: Date.now(),
-        proposedTasks: proposedTasks.length > 0 ? proposedTasks : undefined,
+        // proposedTasks: proposedTasks.length > 0 ? proposedTasks : undefined,
       };
       setChatMessages(prev => [...prev, assistantMessage]);
     } catch (error) {
