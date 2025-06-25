@@ -56,7 +56,6 @@ const PomodoroTimer: React.FC = () => {
       if (timerId.current) clearInterval(timerId.current);
       audioRef.current?.play().catch(e => console.warn("Audio play failed:", e));
       
-      // Показываем уведомление, если разрешено
       const notificationsEnabled = localStorage.getItem('notificationsEnabled') === 'true';
       let notifTitle = '';
       if (phase === PomodoroPhase.WORK) notifTitle = 'Время работать завершено!';
@@ -65,7 +64,6 @@ const PomodoroTimer: React.FC = () => {
       if (notificationsEnabled) {
         showNotification(notifTitle);
       }
-      // Тост всегда
       toast.info(notifTitle);
       
       let nextPhase = PomodoroPhase.WORK;
