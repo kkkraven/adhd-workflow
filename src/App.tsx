@@ -10,17 +10,35 @@ import Assistant from '../components/Assistant';
 import PomodoroTimer from '../components/PomodoroTimer';
 import HelpSection from '../components/HelpSection';
 import { ActiveView } from './types';
+import useGoogleAuth from '../hooks/useGoogleAuth';
 
 const App: React.FC = () => {
   const [activeView, setActiveView] = useState<ActiveView>('tasks');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { isSignedIn, user, signIn, signOut, isLoading } = useGoogleAuth();
 
   return (
     <div className="min-h-screen flex bg-slate-50 dark:bg-slate-900">
+      {/* Бургер-меню для мобильных */}
+      <button
+        className="fixed top-4 left-4 z-50 md:hidden p-2 rounded-lg bg-white border border-[#e5e7eb] shadow hover:bg-[#f5f7fa]"
+        onClick={() => setSidebarOpen(true)}
+        aria-label="Открыть меню"
+      >
+        <svg width="28" height="28" fill="none" viewBox="0 0 24 24"><rect y="4" width="24" height="2" rx="1" fill="#94a3b8"/><rect y="11" width="24" height="2" rx="1" fill="#94a3b8"/><rect y="18" width="24" height="2" rx="1" fill="#94a3b8"/></svg>
+      </button>
       <Sidebar
         activeView={activeView}
         setActiveView={setActiveView}
+        isSignedIn={isSignedIn}
+        user={user}
+        signIn={signIn}
+        signOut={signOut}
+        isLoading={isLoading}
+        isOpen={sidebarOpen || window.innerWidth >= 768}
+        onClose={() => setSidebarOpen(false)}
       />
-      <main className="flex-1 flex flex-col min-h-screen p-4 md:p-8 gap-4">
+      <main className="flex-1 flex flex-col min-h-screen p-4 md:p-8 gap-4 md:ml-0 ml-0">
         <RemindersBar />
         <div className="mb-4">
           <FocusTip />
