@@ -33,7 +33,7 @@ const Modal: React.FC<ModalProps> = ({ title, onClose, children }) => {
   
   return ReactDOM.createPortal(
     <div 
-      className="fixed inset-0 z-[100] bg-slate-900/30 backdrop-blur-sm flex items-center justify-center p-4 transition-opacity duration-300 ease-in-out"
+      className="fixed inset-0 z-[100] bg-slate-900/30 backdrop-blur-sm flex items-center justify-center p-4 transition-opacity duration-500 ease-in-out animate-modalOverlayFadeIn"
       onClick={onClose} 
       role="dialog"
       aria-modal="true"
@@ -41,7 +41,7 @@ const Modal: React.FC<ModalProps> = ({ title, onClose, children }) => {
     >
       <div
         ref={modalRef}
-        className="bg-white shadow-xl rounded-lg p-6 w-full max-w-md transform transition-all duration-300 ease-in-out scale-95 opacity-0 animate-modalFadeInScaleUp"
+        className="bg-white shadow-xl rounded-lg p-6 w-full max-w-md transform transition-all duration-500 ease-in-out scale-95 opacity-0 animate-modalFadeInScaleUp"
         onClick={(e) => e.stopPropagation()} 
         tabIndex={-1}
       >
@@ -59,13 +59,24 @@ const Modal: React.FC<ModalProps> = ({ title, onClose, children }) => {
       </div>
       <style>{`
         @keyframes modalFadeInScaleUp {
+          from {
+            opacity: 0;
+            transform: scale(0.95);
+          }
           to {
             opacity: 1;
             transform: scale(1);
           }
         }
         .animate-modalFadeInScaleUp {
-          animation: modalFadeInScaleUp 0.2s ease-out forwards;
+          animation: modalFadeInScaleUp 0.35s cubic-bezier(0.4,0,0.2,1) forwards;
+        }
+        @keyframes modalOverlayFadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        .animate-modalOverlayFadeIn {
+          animation: modalOverlayFadeIn 0.35s cubic-bezier(0.4,0,0.2,1) forwards;
         }
       `}</style>
     </div>,

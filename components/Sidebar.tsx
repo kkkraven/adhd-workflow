@@ -27,6 +27,9 @@ const navigationItems = [
   { id: 'help', label: 'Помощь', icon: 'fas fa-circle-question' },
 ];
 
+let touchStartX = 0;
+let touchEndX = 0;
+
 const Sidebar: React.FC<SidebarProps> = ({ 
   activeView, 
   setActiveView, 
@@ -40,6 +43,19 @@ const Sidebar: React.FC<SidebarProps> = ({
   isOpen = true, 
   onClose 
 }) => {
+  // Обработчики свайпа для мобильных
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX = e.touches[0].clientX;
+  };
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndX = e.touches[0].clientX;
+  };
+  const handleTouchEnd = () => {
+    if (touchStartX - touchEndX > 60 && onClose) {
+      onClose(); // свайп влево закрывает меню
+    }
+  };
+
   return (
     <>
       {/* Overlay for mobile */}
@@ -53,6 +69,9 @@ const Sidebar: React.FC<SidebarProps> = ({
         className={`fixed md:static z-50 md:z-auto top-0 left-0 h-full md:h-auto w-64 bg-[#f5f7fa] p-6 flex flex-col space-y-7 border-r border-[#e5e7eb] transition-colors duration-200 shadow-none
           ${isOpen ? '' : 'pointer-events-none'}
         `}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
       >
         <div className="flex items-center justify-between mb-2">
           <h1 className="text-2xl font-bold text-slate-800 px-2">

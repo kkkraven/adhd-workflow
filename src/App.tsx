@@ -15,6 +15,9 @@ import { requestNotificationPermission, isNotificationGranted } from './utils/no
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
+let touchStartX = 0;
+let touchEndX = 0;
+
 const App: React.FC = () => {
   const [activeView, setActiveView] = useState<ActiveView>('tasks');
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -31,8 +34,26 @@ const App: React.FC = () => {
     }
   }, [notificationsEnabled]);
 
+  // Обработчики свайпа для открытия Sidebar
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX = e.touches[0].clientX;
+  };
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndX = e.touches[0].clientX;
+  };
+  const handleTouchEnd = () => {
+    if (touchEndX - touchStartX > 60 && !sidebarOpen && window.innerWidth < 768) {
+      setSidebarOpen(true); // свайп вправо открывает меню
+    }
+  };
+
   return (
-    <div className="min-h-screen flex bg-slate-50 dark:bg-slate-900">
+    <div
+      className="min-h-screen flex bg-slate-50 dark:bg-slate-900"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
       {/* Бургер-меню для мобильных */}
       <button
         className="fixed top-4 left-4 z-50 md:hidden p-2 rounded-lg bg-white border border-[#e5e7eb] shadow hover:bg-[#f5f7fa] transition-all duration-300"
