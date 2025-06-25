@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import RemindersBar from '../components/RemindersBar';
 import TodoList from '../components/TodoList';
@@ -11,11 +11,23 @@ import PomodoroTimer from '../components/PomodoroTimer';
 import HelpSection from '../components/HelpSection';
 import { ActiveView } from './types';
 import useGoogleAuth from '../hooks/useGoogleAuth';
+import { requestNotificationPermission, isNotificationGranted } from './utils/notification';
 
 const App: React.FC = () => {
   const [activeView, setActiveView] = useState<ActiveView>('tasks');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { isSignedIn, user, signIn, signOut, isLoading } = useGoogleAuth();
+  const [notificationsEnabled, setNotificationsEnabled] = useState(() => {
+    const saved = localStorage.getItem('notificationsEnabled');
+    return saved === null ? true : saved === 'true';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('notificationsEnabled', String(notificationsEnabled));
+    if (notificationsEnabled && !isNotificationGranted()) {
+      requestNotificationPermission();
+    }
+  }, [notificationsEnabled]);
 
   return (
     <div className="min-h-screen flex bg-slate-50 dark:bg-slate-900">
@@ -53,6 +65,16 @@ const App: React.FC = () => {
         </div>
         <div className="mt-8 flex justify-center">
           <WeeklyProgressReward />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+          <label htmlFor="notif-toggle">Push-уведомления</label>
+          <input
+            id="notif-toggle"
+            type="checkbox"
+            checked={notificationsEnabled}
+            onChange={e => setNotificationsEnabled(e.target.checked)}
+            style={{ width: 40, height: 20 }}
+          />
         </div>
       </main>
     </div>

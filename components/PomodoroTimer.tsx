@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { PomodoroPhase, PomodoroSettings } from '../types';
 import { DEFAULT_POMODORO_SETTINGS } from '../constants';
 import useLocalStorage from '../hooks/useLocalStorage';
+import { showNotification } from '../src/utils/notification';
 
 const PomodoroTimer: React.FC = () => {
   const [settings] = useLocalStorage<PomodoroSettings>('pomodoroSettings', DEFAULT_POMODORO_SETTINGS);
@@ -53,6 +54,16 @@ const PomodoroTimer: React.FC = () => {
     } else if (timeLeft === 0 && isRunning) { 
       if (timerId.current) clearInterval(timerId.current);
       audioRef.current?.play().catch(e => console.warn("Audio play failed:", e));
+      
+      // Показываем уведомление, если разрешено
+      const notificationsEnabled = localStorage.getItem('notificationsEnabled') === 'true';
+      if (notificationsEnabled) {
+        let notifTitle = '';
+        if (phase === PomodoroPhase.WORK) notifTitle = 'Время работать завершено!';
+        else if (phase === PomodoroPhase.SHORT_BREAK) notifTitle = 'Перерыв окончен!';
+        else if (phase === PomodoroPhase.LONG_BREAK) notifTitle = 'Длинный отдых окончен!';
+        showNotification(notifTitle);
+      }
       
       let nextPhase = PomodoroPhase.WORK;
       if (phase === PomodoroPhase.WORK) {
