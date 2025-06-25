@@ -92,7 +92,6 @@ const App: React.FC = () => {
         pauseOnHover
         theme="colored"
         toastClassName="!rounded-xl !shadow-lg !font-semibold !text-base"
-        bodyClassName="!py-3 !px-4"
         icon={({type}) => type === 'success' ? '🎉' : type === 'error' ? '❌' : type === 'info' ? 'ℹ️' : '⚠️'}
       />
       {/* Overlay для Sidebar на мобильных */}

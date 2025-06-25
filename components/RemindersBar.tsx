@@ -19,23 +19,7 @@ const RemindersBar: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    setLoading(true);
-    fetchUserTasks()
-      .then(setTasks)
-      .catch(e => setError(e.message))
-      .finally(() => setLoading(false));
-  }, []);
-
-  useEffect(() => {
-    if (overdueTasks.length > 0) {
-      toast.warn(`Просрочено задач: ${overdueTasks.length}`);
-    }
-    if (upcomingTasks.length > 0) {
-      toast.info(`Ближайших задач: ${upcomingTasks.length}`);
-    }
-  }, [overdueTasks.length, upcomingTasks.length]);
-
+  // Мемоизированная фильтрация задач: просроченные и ближайшие
   const { overdueTasks, upcomingTasks } = useMemo(() => {
     const now = new Date();
     const overdue: Task[] = [];
@@ -62,6 +46,25 @@ const RemindersBar: React.FC = () => {
     upcoming.sort((a, b) => (getTaskDateTime(a)?.getTime() || 0) - (getTaskDateTime(b)?.getTime() || 0));
     return { overdueTasks: overdue, upcomingTasks: upcoming };
   }, [tasks]);
+
+  // Загрузка задач при монтировании компонента
+  useEffect(() => {
+    setLoading(true);
+    fetchUserTasks()
+      .then(setTasks)
+      .catch(e => setError(e.message))
+      .finally(() => setLoading(false));
+  }, []);
+
+  // Показываем тосты, если есть просроченные или ближайшие задачи
+  useEffect(() => {
+    if (overdueTasks.length > 0) {
+      toast.warn(`Просрочено задач: ${overdueTasks.length}`);
+    }
+    if (upcomingTasks.length > 0) {
+      toast.info(`Ближайших задач: ${upcomingTasks.length}`);
+    }
+  }, [overdueTasks.length, upcomingTasks.length]);
 
   if (loading) {
     return <div className="mb-6 p-4 rounded-lg shadow-md border border-slate-200 bg-white text-center text-slate-500"><i className="fas fa-spinner fa-spin mr-2"></i>Загрузка напоминаний...</div>;

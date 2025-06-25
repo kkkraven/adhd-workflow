@@ -5,6 +5,13 @@ import { ActiveView } from '../types';
 interface SidebarProps {
   activeView: ActiveView;
   setActiveView: (view: ActiveView) => void;
+  isSignedIn: boolean;
+  user: any;
+  signIn: () => void;
+  signOut: () => void;
+  isLoading: boolean;
+  isOpen?: boolean;
+  onClose?: () => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView }) => {

@@ -1,3 +1,4 @@
+import React, { useState } from 'react';
 import Modal from '../../components/Modal';
 import { createCalendarEvent } from '../services/backendApi';
 import { toast } from 'react-toastify';
@@ -26,8 +27,7 @@ const TaskCalendar: React.FC = () => {
       toast.success('Событие создано!');
       setShowEventModal(false);
       setEventForm({ summary: '', date: '', time: '', description: '' });
-      // Обновить события (fetchGoogleEventsCb)
-      if (typeof fetchGoogleEventsCb === 'function') fetchGoogleEventsCb();
+      // TODO: обновить события календаря, если нужно
     } catch (err: any) {
       toast.error('Ошибка создания события');
     } finally {
@@ -48,19 +48,19 @@ const TaskCalendar: React.FC = () => {
           <form onSubmit={handleCreateEvent} className="space-y-4">
             <div>
               <label className="block text-sm font-medium mb-1">Название</label>
-              <input type="text" required className="w-full border rounded p-2" value={eventForm.summary} onChange={e => setEventForm(f => ({ ...f, summary: e.target.value }))} />
+              <input type="text" required className="w-full border rounded p-2" value={eventForm.summary} onChange={e => setEventForm((f: typeof eventForm) => ({ ...f, summary: e.target.value }))} />
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">Дата</label>
-              <input type="date" required className="w-full border rounded p-2" value={eventForm.date} onChange={e => setEventForm(f => ({ ...f, date: e.target.value }))} />
+              <input type="date" required className="w-full border rounded p-2" value={eventForm.date} onChange={e => setEventForm((f: typeof eventForm) => ({ ...f, date: e.target.value }))} />
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">Время</label>
-              <input type="time" className="w-full border rounded p-2" value={eventForm.time} onChange={e => setEventForm(f => ({ ...f, time: e.target.value }))} />
+              <input type="time" className="w-full border rounded p-2" value={eventForm.time} onChange={e => setEventForm((f: typeof eventForm) => ({ ...f, time: e.target.value }))} />
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">Описание</label>
-              <textarea className="w-full border rounded p-2" value={eventForm.description} onChange={e => setEventForm(f => ({ ...f, description: e.target.value }))} />
+              <textarea className="w-full border rounded p-2" value={eventForm.description} onChange={e => setEventForm((f: typeof eventForm) => ({ ...f, description: e.target.value }))} />
             </div>
             <button type="submit" disabled={creating} className="w-full py-2 bg-sky-600 text-white rounded-lg font-semibold hover:bg-sky-700 transition-colors">
               {creating ? 'Создание...' : 'Создать'}
