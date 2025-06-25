@@ -114,22 +114,10 @@ const PomodoroTimer: React.FC = () => {
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (progressPercentage / 100) * circumference;
 
-  const handleSettingsSave = (newSettings: PomodoroSettings) => {
-    setSettings(newSettings);
-    setIsSettingsModalOpen(false);
-  };
-
   return (
     <div className="bg-white rounded-lg p-6 flex flex-col items-center shadow-sm border border-slate-200">
       <div className="w-full flex justify-between items-center mb-3">
         <h1 className="text-3xl font-bold text-slate-800">Pomodoro</h1>
-        <button
-          onClick={() => setIsSettingsModalOpen(true)}
-          className="text-slate-500 hover:text-sky-600 transition-colors focus-ring rounded-md p-1"
-          aria-label="Открыть настройки таймера Помидоро"
-        >
-          <i className="fas fa-cog text-xl"></i>
-        </button>
       </div>
       <p className={`text-center text-lg ${currentPhaseConfig.textColor} mb-6 font-medium`}>{currentPhaseConfig.name}</p>
       
@@ -197,56 +185,7 @@ const PomodoroTimer: React.FC = () => {
           ))}
       </div>
       <p className="text-center text-xs text-slate-500 mt-5">Завершено циклов работы: {cyclesCompleted}</p>
-
-      {isSettingsModalOpen && (
-        <Modal title="Настройки Помидоро" onClose={() => setIsSettingsModalOpen(false)}>
-          <PomodoroSettingsForm currentSettings={settings} onSave={handleSettingsSave} />
-        </Modal>
-      )}
     </div>
-  );
-};
-
-interface PomodoroSettingsFormProps {
-  currentSettings: PomodoroSettings;
-  onSave: (settings: PomodoroSettings) => void;
-}
-
-const PomodoroSettingsForm: React.FC<PomodoroSettingsFormProps> = ({ currentSettings, onSave }) => {
-  const [formSettings, setFormSettings] = useState<PomodoroSettings>(currentSettings);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormSettings(prev => ({ ...prev, [name]: parseInt(value, 10) || 0 }));
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSave(formSettings);
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4 text-slate-700">
-      <div>
-        <label htmlFor="workDuration" className="block text-sm font-medium mb-1">Работа (минуты):</label>
-        <input type="number" id="workDuration" name="workDuration" value={formSettings.workDuration} onChange={handleChange} min="1" className="w-full p-2 bg-slate-50 border border-slate-300 rounded-md focus-ring text-slate-700" />
-      </div>
-      <div>
-        <label htmlFor="shortBreakDuration" className="block text-sm font-medium mb-1">Короткий перерыв (минуты):</label>
-        <input type="number" id="shortBreakDuration" name="shortBreakDuration" value={formSettings.shortBreakDuration} onChange={handleChange} min="1" className="w-full p-2 bg-slate-50 border border-slate-300 rounded-md focus-ring text-slate-700" />
-      </div>
-      <div>
-        <label htmlFor="longBreakDuration" className="block text-sm font-medium mb-1">Длинный перерыв (минуты):</label>
-        <input type="number" id="longBreakDuration" name="longBreakDuration" value={formSettings.longBreakDuration} onChange={handleChange} min="1" className="w-full p-2 bg-slate-50 border border-slate-300 rounded-md focus-ring text-slate-700" />
-      </div>
-      <div>
-        <label htmlFor="longBreakInterval" className="block text-sm font-medium mb-1">Циклов до длинного перерыва:</label>
-        <input type="number" id="longBreakInterval" name="longBreakInterval" value={formSettings.longBreakInterval} onChange={handleChange} min="1" className="w-full p-2 bg-slate-50 border border-slate-300 rounded-md focus-ring text-slate-700" />
-      </div>
-      <button type="submit" className="w-full bg-sky-600 hover:bg-sky-500 text-white font-semibold py-2.5 px-4 rounded-lg transition-colors focus-ring">
-        Сохранить Настройки
-      </button>
-    </form>
   );
 };
 

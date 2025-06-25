@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { ActiveView } from '../types';
 import WeeklyProgressReward from './WeeklyProgressReward'; // Import the refactored component
+import useGoogleAuth from '../hooks/useGoogleAuth';
 
 interface SidebarProps {
   activeView: ActiveView;
@@ -25,6 +26,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   isDarkMode, 
   setIsDarkMode 
 }) => {
+  const { isSignedIn, user, signIn, signOut, isLoading } = useGoogleAuth();
   return (
     <motion.aside 
       initial={{ x: -20, opacity: 0 }}
@@ -77,6 +79,31 @@ const Sidebar: React.FC<SidebarProps> = ({
       {/* Weekly Reward Visual below Help */}
       <div className="mt-auto border-t border-slate-200 dark:border-slate-700 pt-1">
         <WeeklyProgressReward />
+        <div className="flex justify-center mt-4">
+          {!isSignedIn ? (
+            <button
+              className="p-2 rounded-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 shadow hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors"
+              onClick={signIn}
+              disabled={isLoading}
+              title="Войти через Google"
+            >
+              <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" className="w-6 h-6" />
+            </button>
+          ) : (
+            <div className="flex items-center gap-2">
+              {user?.getImageUrl && (
+                <img src={user.getImageUrl()} alt="avatar" className="w-7 h-7 rounded-full border" />
+              )}
+              <button
+                className="p-2 rounded-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 shadow hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors"
+                onClick={signOut}
+                title="Выйти из Google"
+              >
+                <i className="fas fa-sign-out-alt text-slate-500"></i>
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </motion.aside>
   );
