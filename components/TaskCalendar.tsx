@@ -4,6 +4,7 @@ import { fetchUserTasks } from '../src/services/backendApi';
 import useGoogleAuth from '../hooks/useGoogleAuth';
 import { listUpcomingEvents, doesEventOccurOnDate } from '../services/googleCalendarService';
 import { GOOGLE_CLIENT_ID } from '../constants';
+import { toast } from 'react-toastify';
 
 const DAYS_OF_WEEK_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 const MONTH_NAMES_RU = [
@@ -279,6 +280,13 @@ const TaskCalendar: React.FC = () => {
       setSelectedDay({ date: day, items: combinedItems, ref });
     } else {
       setSelectedDay(null); 
+    }
+
+    if (dayLocalTasks.length > 0) {
+      toast.info(`Задач на этот день: ${dayLocalTasks.length}`);
+    }
+    if (dayGoogleEvents.length > 0) {
+      toast.success(`Событий Google Calendar: ${dayGoogleEvents.length}`);
     }
   };
   

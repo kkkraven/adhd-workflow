@@ -1,6 +1,7 @@
 import React, { useMemo, useEffect, useState } from 'react';
 import { Task } from '../types';
 import { fetchUserTasks } from '../src/services/backendApi';
+import { toast } from 'react-toastify';
 
 const getTaskDateTime = (task: Task): Date | null => {
   if (!task.dueDate) return null;
@@ -25,6 +26,15 @@ const RemindersBar: React.FC = () => {
       .catch(e => setError(e.message))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    if (overdueTasks.length > 0) {
+      toast.warn(`Просрочено задач: ${overdueTasks.length}`);
+    }
+    if (upcomingTasks.length > 0) {
+      toast.info(`Ближайших задач: ${upcomingTasks.length}`);
+    }
+  }, [overdueTasks.length, upcomingTasks.length]);
 
   const { overdueTasks, upcomingTasks } = useMemo(() => {
     const now = new Date();

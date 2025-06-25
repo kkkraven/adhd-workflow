@@ -12,6 +12,8 @@ import HelpSection from '../components/HelpSection';
 import { ActiveView } from './types';
 import useGoogleAuth from '../hooks/useGoogleAuth';
 import { requestNotificationPermission, isNotificationGranted } from './utils/notification';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const App: React.FC = () => {
   const [activeView, setActiveView] = useState<ActiveView>('tasks');
@@ -33,11 +35,13 @@ const App: React.FC = () => {
     <div className="min-h-screen flex bg-slate-50 dark:bg-slate-900">
       {/* Бургер-меню для мобильных */}
       <button
-        className="fixed top-4 left-4 z-50 md:hidden p-2 rounded-lg bg-white border border-[#e5e7eb] shadow hover:bg-[#f5f7fa]"
+        className="fixed top-4 left-4 z-50 md:hidden p-2 rounded-lg bg-white border border-[#e5e7eb] shadow hover:bg-[#f5f7fa] transition-all duration-300"
         onClick={() => setSidebarOpen(true)}
         aria-label="Открыть меню"
       >
-        <svg width="28" height="28" fill="none" viewBox="0 0 24 24"><rect y="4" width="24" height="2" rx="1" fill="#94a3b8"/><rect y="11" width="24" height="2" rx="1" fill="#94a3b8"/><rect y="18" width="24" height="2" rx="1" fill="#94a3b8"/></svg>
+        <span className={`block w-7 h-1 bg-slate-400 rounded transition-all duration-300 ${sidebarOpen ? 'rotate-45 translate-y-2' : ''}`}></span>
+        <span className={`block w-7 h-1 bg-slate-400 rounded my-1 transition-all duration-300 ${sidebarOpen ? 'opacity-0' : ''}`}></span>
+        <span className={`block w-7 h-1 bg-slate-400 rounded transition-all duration-300 ${sidebarOpen ? '-rotate-45 -translate-y-2' : ''}`}></span>
       </button>
       <Sidebar
         activeView={activeView}
@@ -77,6 +81,33 @@ const App: React.FC = () => {
           />
         </div>
       </main>
+      <ToastContainer
+        position="top-center"
+        autoClose={3500}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="colored"
+        toastClassName="!rounded-xl !shadow-lg !font-semibold !text-base"
+        bodyClassName="!py-3 !px-4"
+        icon={({type}) => type === 'success' ? '🎉' : type === 'error' ? '❌' : type === 'info' ? 'ℹ️' : '⚠️'}
+      />
+      {/* Overlay для Sidebar на мобильных */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm animate-fadeInSidebarOverlay md:hidden" onClick={() => setSidebarOpen(false)}></div>
+      )}
+      <style>{`
+        @keyframes fadeInSidebarOverlay {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        .animate-fadeInSidebarOverlay {
+          animation: fadeInSidebarOverlay 0.25s ease;
+        }
+      `}</style>
     </div>
   );
 };
