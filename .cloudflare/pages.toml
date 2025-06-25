@@ -1,0 +1,25 @@
+[build]
+command = "chmod +x build.sh && ./build.sh"
+output_directory = "dist"
+
+[build.environment]
+NODE_VERSION = "20"
+NPM_VERSION = "10"
+NODE_ENV = "production"
+PATH = "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin"
+
+[deployment]
+production_branch = "main"
+
+[deployment.environment]
+NODE_ENV = "production"
+
+[deployment.preview]
+command = "chmod +x build.sh && ./build.sh"
+output_directory = "dist"
+
+[deployment.preview.environment]
+NODE_ENV = "preview"
+
+[build.upload]
+format = "service-worker" 
