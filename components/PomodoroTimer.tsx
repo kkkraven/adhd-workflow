@@ -2,15 +2,13 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { PomodoroPhase, PomodoroSettings } from '../types';
 import { DEFAULT_POMODORO_SETTINGS } from '../constants';
 import useLocalStorage from '../hooks/useLocalStorage';
-import Modal from './Modal'; 
 
 const PomodoroTimer: React.FC = () => {
-  const [settings, setSettings] = useLocalStorage<PomodoroSettings>('pomodoroSettings', DEFAULT_POMODORO_SETTINGS);
+  const [settings] = useLocalStorage<PomodoroSettings>('pomodoroSettings', DEFAULT_POMODORO_SETTINGS);
   const [phase, setPhase] = useState<PomodoroPhase>(PomodoroPhase.WORK);
   const [timeLeft, setTimeLeft] = useState(settings.workDuration * 60);
   const [isRunning, setIsRunning] = useState(false);
   const [cyclesCompleted, setCyclesCompleted] = useState(0);
-  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
 
   const timerId = useRef<ReturnType<typeof setInterval> | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
