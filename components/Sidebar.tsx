@@ -66,7 +66,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         initial={{ x: -20, opacity: 0 }}
         animate={{ x: isOpen ? 0 : -320, opacity: isOpen ? 1 : 0 }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        className={`fixed md:static z-50 md:z-auto top-0 left-0 h-full md:h-auto w-64 bg-[#f5f7fa] p-6 flex flex-col space-y-7 border-r border-[#e5e7eb] transition-colors duration-200 shadow-none
+        className={`fixed md:static z-50 md:z-auto top-0 left-0 h-full md:h-auto w-64 bg-sidebar p-6 flex flex-col space-y-7 border-r border-[#e5e7eb] transition-colors duration-200 shadow-none
           ${isOpen ? '' : 'pointer-events-none'}
         `}
         onTouchStart={handleTouchStart}
@@ -74,7 +74,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         onTouchEnd={handleTouchEnd}
       >
         <div className="flex items-center justify-between mb-2">
-          <h1 className="text-2xl font-bold text-slate-800 px-2">
+          <h1 className="text-2xl font-bold text-text-main px-2">
             ADHD Workflow
           </h1>
         </div>
@@ -91,8 +91,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                   className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-base font-medium transition-colors duration-150 group
                     ${
                       activeView === item.id
-                        ? 'bg-white text-slate-900 border border-[#e5e7eb]'
-                        : 'text-slate-600 hover:bg-white hover:text-slate-900 border border-transparent'
+                        ? 'bg-accent-light text-accent border border-accent'
+                        : 'text-text-secondary hover:bg-accent-light hover:text-accent border border-transparent'
                     }
                     focus-ring
                   `}
@@ -100,8 +100,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                 >
                   <i className={`${item.icon} w-5 h-5 text-base ${
                     activeView === item.id 
-                      ? 'text-blue-400' 
-                      : 'text-slate-400 group-hover:text-blue-400'
+                      ? 'text-accent' 
+                      : 'text-icon-gray group-hover:text-accent'
                   }`}></i>
                   <span>{item.label}</span>
                 </button>

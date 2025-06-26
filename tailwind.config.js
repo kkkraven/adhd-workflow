@@ -20,6 +20,12 @@ export default {
           800: '#075985',
           900: '#0c4a6e',
         },
+        sidebar: '#f5f7fa',
+        accent: '#0ea5e9',
+        'accent-light': '#e0f2fe',
+        'text-main': '#22223b',
+        'text-secondary': '#334155',
+        'icon-gray': '#94a3b8',
       },
       animation: {
         'fade-in': 'fadeIn 0.3s ease-in-out',

@@ -49,7 +49,7 @@ const App: React.FC = () => {
 
   return (
     <div
-      className="min-h-screen flex bg-slate-50 dark:bg-slate-900"
+      className="min-h-screen flex bg-white"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
@@ -75,7 +75,7 @@ const App: React.FC = () => {
         isOpen={sidebarOpen || window.innerWidth >= 768}
         onClose={() => setSidebarOpen(false)}
       />
-      <main className="flex-1 flex flex-col min-h-screen p-4 md:p-8 gap-4 md:ml-0 ml-0">
+      <main className="flex-1 flex flex-col min-h-screen p-4 md:p-8 gap-4 md:ml-0 ml-0 text-text-main">
         <RemindersBar />
         <div className="mb-4">
           <FocusTip />
@@ -101,6 +101,11 @@ const App: React.FC = () => {
             style={{ width: 40, height: 20 }}
           />
         </div>
+        <button
+          className="mb-4 px-4 py-2 bg-accent text-white rounded-lg font-semibold shadow hover:bg-accent-light hover:text-accent transition-colors"
+        >
+          <i className="fas fa-plus mr-2"></i>Добавить событие
+        </button>
       </main>
       <ToastContainer
         position="top-center"
