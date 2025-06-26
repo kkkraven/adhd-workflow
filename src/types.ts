@@ -25,16 +25,28 @@ export type ThemeSettings = {
   interface: InterfaceSettings;
 };
 
+// Тип задачи для Google Tasks API
+export interface GoogleTask {
+  id: string;
+  title: string;
+  notes?: string;
+  status: 'needsAction' | 'completed';
+  due?: string; // ISO строка даты
+  completed?: string; // ISO строка даты
+  updated?: string; // ISO строка даты
+}
+
+// Обновляю Task для совместимости с Google Tasks (добавляю updated)
 export interface Task {
   id: string;
   title: string;
   description?: string;
-  dueDate?: Date;
+  dueDate?: Date | string;
   completed: boolean;
   priority: 'low' | 'medium' | 'high';
   tags: string[];
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: Date | string;
+  updated?: string; // Для синхронизации с Google Tasks
 }
 
 export interface Checklist {

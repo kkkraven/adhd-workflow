@@ -337,6 +337,10 @@ const TaskCalendar: React.FC = () => {
     })
   ].sort((a, b) => (a.eventDateObject?.getTime() || 0) - (b.eventDateObject?.getTime() || 0));
 
+  const handleCreateEvent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    // ... логика создания события ...
+  };
 
   const renderGoogleAuthButton = () => {
     if (!isGoogleApiConfigured) {

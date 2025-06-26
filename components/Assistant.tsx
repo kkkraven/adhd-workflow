@@ -4,7 +4,7 @@ import { createUserTask, fetchUserTasks } from '../src/services/backendApi';
 import useLocalStorage from '../hooks/useLocalStorage';
 import { getGoalBreakdown } from '../services/geminiService';
 import { listUpcomingEvents } from '../services/googleCalendarService';
-import { useGoogleAuth } from '../hooks/useGoogleAuth';
+import useGoogleAuth from '../hooks/useGoogleAuth';
 import { differenceInCalendarDays, subDays } from 'date-fns';
 
 const Assistant: React.FC = () => {

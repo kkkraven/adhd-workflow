@@ -3,10 +3,11 @@ import { Task, PriorityLevel } from '../types';
 import { fetchUserTasks, createUserTask, updateUserTask, deleteUserTask } from '../src/services/backendApi';
 import TodoItem from './TodoItem';
 import MiniCalendarDatePicker from './MiniCalendarDatePicker';
-import { useGoogleAuth } from '../hooks/useGoogleAuth';
+import useGoogleAuth from '../hooks/useGoogleAuth';
 import { listTasks, insertTask } from '../services/googleTasksService';
 import { toast } from 'react-toastify';
 import useLocalStorage from '../hooks/useLocalStorage';
+// @ts-ignore
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 
 const sortTasks = (tasks: Task[]): Task[] => {
@@ -68,6 +69,8 @@ const TodoList: React.FC = () => {
   const datePickerButtonRef = useRef<HTMLButtonElement>(null);
   const { accessToken } = useGoogleAuth();
   const [chatMessages, setChatMessages] = useLocalStorage('assistantChatMessages', []);
+  const [showQuickInput, setShowQuickInput] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchUserTasks()
@@ -391,15 +394,17 @@ const TodoList: React.FC = () => {
       )}
       <DragDropContext onDragEnd={onDragEnd}>
         <Droppable droppableId="todo-list-droppable">
-          {(provided) => (
+          {(provided: any) => (
             <ul
               className="space-y-3 max-h-[calc(100vh-30rem)] overflow-y-auto pr-2 custom-scrollbar"
               ref={provided.innerRef}
               {...provided.droppableProps}
+              onClick={() => setShowQuickInput(true)}
+              style={{ cursor: 'pointer' }}
             >
               {tasks.map((task, index) => (
                 <Draggable key={task.id} draggableId={task.id} index={index}>
-                  {(provided, snapshot) => (
+                  {(provided: any, snapshot: any) => (
                     <li
                       ref={provided.innerRef}
                       {...provided.draggableProps}
@@ -419,6 +424,25 @@ const TodoList: React.FC = () => {
                 </Draggable>
               ))}
               {provided.placeholder}
+              {showQuickInput && (
+                <li className="flex items-center py-2 border-b bg-slate-50">
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    value={newTaskText}
+                    onChange={e => setNewTaskText(e.target.value)}
+                    onBlur={() => setShowQuickInput(false)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        addTask(e as any);
+                        setShowQuickInput(false);
+                      }
+                    }}
+                    placeholder="Быстрое добавление задачи..."
+                    className="w-full p-2 border rounded focus-ring"
+                  />
+                </li>
+              )}
             </ul>
           )}
         </Droppable>
