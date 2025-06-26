@@ -27,8 +27,3 @@ export async function getGoalBreakdown(goal: string): Promise<string> {
   const prompt = `Разбей цель на задачи и предложи план действий. Цель: ${goal}`;
   return callGeminiAPI(prompt);
 }
-
-export async function getFocusTip(): Promise<string> {
-  const prompt = 'Дай короткий совет по фокусировке для человека с СДВГ.';
-  return callGeminiAPI(prompt);
-}
