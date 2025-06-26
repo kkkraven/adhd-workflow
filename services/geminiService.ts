@@ -23,7 +23,7 @@ async function callGeminiAPI(prompt: string): Promise<string> {
   return data.candidates?.[0]?.content?.parts?.[0]?.text || 'Нет ответа от Gemini.';
 }
 
-export async function getGoalBreakdown(goal: string, chatMessages?: any[]): Promise<string> {
+export async function getGoalBreakdown(goal: string): Promise<string> {
   const prompt = `Разбей цель на задачи и предложи план действий. Цель: ${goal}`;
   return callGeminiAPI(prompt);
 }
