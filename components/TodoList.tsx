@@ -3,6 +3,11 @@ import { Task, PriorityLevel } from '../types';
 import { fetchUserTasks, createUserTask, updateUserTask, deleteUserTask } from '../src/services/backendApi';
 import TodoItem from './TodoItem';
 import MiniCalendarDatePicker from './MiniCalendarDatePicker';
+import { useGoogleAuth } from '../hooks/useGoogleAuth';
+import { listTasks, insertTask } from '../services/googleTasksService';
+import { toast } from 'react-toastify';
+import useLocalStorage from '../hooks/useLocalStorage';
+import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 
 const sortTasks = (tasks: Task[]): Task[] => {
   return [...tasks].sort((a, b) => {
@@ -51,6 +56,7 @@ const sortTasks = (tasks: Task[]): Task[] => {
   });
 };
 
+const AUTO_TASKS_REFRESH_INTERVAL = 60000; // 60 секунд
 
 const TodoList: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -60,6 +66,8 @@ const TodoList: React.FC = () => {
   const [newPriority, setNewPriority] = useState<PriorityLevel | undefined>(undefined);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const datePickerButtonRef = useRef<HTMLButtonElement>(null);
+  const { accessToken } = useGoogleAuth();
+  const [chatMessages, setChatMessages] = useLocalStorage('assistantChatMessages', []);
 
   useEffect(() => {
     fetchUserTasks()
@@ -144,12 +152,149 @@ const TodoList: React.FC = () => {
        : 'bg-slate-200 hover:bg-slate-300 text-slate-700'
      }`;
   
+  // Импорт задач из Google Tasks
+  const importFromGoogleTasks = async () => {
+    if (!accessToken) {
+      toast.error('Нет доступа к Google Tasks');
+      return;
+    }
+    try {
+      const googleTasks = await listTasks(accessToken);
+      if (!googleTasks.length) {
+        toast.info('В Google Tasks нет задач для импорта.');
+        return;
+      }
+      // Маппинг GoogleTask -> Task
+      const mapped = googleTasks.map(gt => ({
+        id: gt.id,
+        text: gt.title || '',
+        isCompleted: gt.status === 'completed',
+        createdAt: gt.updated ? new Date(gt.updated).getTime() : Date.now(),
+        dueDate: gt.due ? gt.due.slice(0, 10) : undefined,
+        dueTime: gt.due ? gt.due.slice(11, 16) : undefined,
+        priority: undefined,
+      }));
+      // Добавляем только новые задачи (по id)
+      setTasks(prev => {
+        const existingIds = new Set(prev.map(t => t.id));
+        const toAdd = mapped.filter(t => !existingIds.has(t.id));
+        if (toAdd.length) toast.success(`Импортировано задач: ${toAdd.length}`);
+        else toast.info('Все задачи уже импортированы.');
+        return sortTasks([...prev, ...toAdd]);
+      });
+    } catch (e: any) {
+      toast.error('Ошибка импорта из Google Tasks');
+    }
+  };
+
+  // Экспорт задач в Google Tasks
+  const exportToGoogleTasks = async () => {
+    if (!accessToken) {
+      toast.error('Нет доступа к Google Tasks');
+      return;
+    }
+    try {
+      let count = 0;
+      for (const t of tasks) {
+        await insertTask(accessToken, {
+          title: t.text,
+          status: t.isCompleted ? 'completed' : 'needsAction',
+          due: t.dueDate ? `${t.dueDate}T${t.dueTime || '00:00:00'}.000Z` : undefined,
+        });
+        count++;
+      }
+      toast.success(`Экспортировано задач: ${count}`);
+    } catch (e: any) {
+      toast.error('Ошибка экспорта в Google Tasks');
+    }
+  };
+
+  // Автообновление задач из Google Tasks
+  useEffect(() => {
+    if (!accessToken) return;
+    let stopped = false;
+    const poll = async () => {
+      try {
+        const googleTasks = await listTasks(accessToken);
+        setTasks(prev => {
+          const byId: Record<string, Task> = Object.fromEntries(prev.map(t => [t.id, t]));
+          let updated = [...prev];
+          for (const gt of googleTasks) {
+            const local = byId[gt.id];
+            const gtUpdated = gt.updated ? new Date(gt.updated).getTime() : 0;
+            if (!local) {
+              // Новая задача из Google
+              updated.push({
+                id: gt.id,
+                text: gt.title || '',
+                isCompleted: gt.status === 'completed',
+                createdAt: gtUpdated || Date.now(),
+                dueDate: gt.due ? gt.due.slice(0, 10) : undefined,
+                dueTime: gt.due ? gt.due.slice(11, 16) : undefined,
+                priority: undefined,
+              });
+            } else {
+              // Конфликт: обновляем, если Google версия свежее
+              if (gtUpdated > (local.updated || local.createdAt)) {
+                updated = updated.map(t => t.id === gt.id ? {
+                  ...t,
+                  text: gt.title || '',
+                  isCompleted: gt.status === 'completed',
+                  dueDate: gt.due ? gt.due.slice(0, 10) : undefined,
+                  dueTime: gt.due ? gt.due.slice(11, 16) : undefined,
+                } : t);
+              }
+            }
+          }
+          return sortTasks(updated);
+        });
+      } catch {}
+      if (!stopped) setTimeout(poll, AUTO_TASKS_REFRESH_INTERVAL);
+    };
+    poll();
+    return () => { stopped = true; };
+  }, [accessToken]);
+
+  // Генерация подзадач через Assistant
+  const handleGenerateSubtasks = (task: Task) => {
+    const userMessage = {
+      id: crypto.randomUUID(),
+      sender: 'user',
+      text: `Разбей задачу на подзадачи: ${task.text}`,
+      timestamp: Date.now(),
+    };
+    setChatMessages((prev: any[]) => [...prev, userMessage]);
+    // Можно добавить уведомление/toast
+  };
+
+  // Drag & Drop обработчик
+  const onDragEnd = (result: DropResult) => {
+    if (!result.destination) return;
+    const reordered = Array.from(tasks);
+    const [removed] = reordered.splice(result.source.index, 1);
+    reordered.splice(result.destination.index, 0, removed);
+    setTasks(reordered);
+  };
 
   return (
     <div className="bg-white rounded-lg">
       <h1 className="text-3xl font-bold text-slate-800 mb-6">
         Задачи
       </h1>
+      <div className="flex gap-2 mb-4">
+        <button
+          className="px-4 py-2 bg-green-600 text-white rounded-lg font-semibold shadow hover:bg-green-700 transition-colors"
+          onClick={importFromGoogleTasks}
+        >
+          <i className="fab fa-google mr-2"></i>Импорт из Google Tasks
+        </button>
+        <button
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold shadow hover:bg-blue-700 transition-colors"
+          onClick={exportToGoogleTasks}
+        >
+          <i className="fab fa-google mr-2"></i>Экспорт в Google Tasks
+        </button>
+      </div>
       <form onSubmit={addTask} className="mb-6 p-4 bg-slate-50 rounded-lg border border-slate-200">
         <div className="sm:col-span-2 mb-3">
             <label htmlFor="newTaskText" className="sr-only">Текст новой задачи</label>
@@ -244,16 +389,40 @@ const TodoList: React.FC = () => {
             <p className="text-sm">Добавьте первую, чтобы начать планировать!</p>
         </div>
       )}
-      <ul className="space-y-3 max-h-[calc(100vh-30rem)] overflow-y-auto pr-2 custom-scrollbar"> {/* Adjusted max-h for new fields */}
-        {tasks.map(task => (
-          <TodoItem
-            key={task.id}
-            task={task}
-            onToggle={toggleTask}
-            onDelete={deleteTaskHandler}
-          />
-        ))}
-      </ul>
+      <DragDropContext onDragEnd={onDragEnd}>
+        <Droppable droppableId="todo-list-droppable">
+          {(provided) => (
+            <ul
+              className="space-y-3 max-h-[calc(100vh-30rem)] overflow-y-auto pr-2 custom-scrollbar"
+              ref={provided.innerRef}
+              {...provided.droppableProps}
+            >
+              {tasks.map((task, index) => (
+                <Draggable key={task.id} draggableId={task.id} index={index}>
+                  {(provided, snapshot) => (
+                    <li
+                      ref={provided.innerRef}
+                      {...provided.draggableProps}
+                      {...provided.dragHandleProps}
+                      className={`flex items-center justify-between py-2 border-b bg-white transition-shadow ${snapshot.isDragging ? 'shadow-lg' : ''}`}
+                    >
+                      <TodoItem task={task} onToggle={toggleTask} onDelete={deleteTaskHandler} />
+                      <button
+                        className="ml-2 px-2 py-1 text-xs bg-sky-100 text-sky-700 rounded hover:bg-sky-200"
+                        onClick={() => handleGenerateSubtasks(task)}
+                        title="Сгенерировать подзадачи"
+                      >
+                        <i className="fas fa-sitemap mr-1"></i>Подзадачи
+                      </button>
+                    </li>
+                  )}
+                </Draggable>
+              ))}
+              {provided.placeholder}
+            </ul>
+          )}
+        </Droppable>
+      </DragDropContext>
     </div>
   );
 };

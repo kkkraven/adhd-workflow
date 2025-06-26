@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { ChatMessage, ProposedTask, Task } from '../types';
-import { createUserTask } from '../src/services/backendApi';
+import { createUserTask, fetchUserTasks } from '../src/services/backendApi';
 import useLocalStorage from '../hooks/useLocalStorage';
 import { getGoalBreakdown } from '../services/geminiService';
+import { listUpcomingEvents } from '../services/googleCalendarService';
+import { useGoogleAuth } from '../hooks/useGoogleAuth';
+import { differenceInCalendarDays, subDays } from 'date-fns';
 
 const Assistant: React.FC = () => {
   const initialBotMessage: ChatMessage = {
@@ -24,6 +27,8 @@ const Assistant: React.FC = () => {
 
   useEffect(scrollToBottom, [chatMessages]);
 
+  const { accessToken } = useGoogleAuth();
+
   const handleSendMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     const trimmedInput = userInput.trim();
@@ -38,6 +43,102 @@ const Assistant: React.FC = () => {
     setChatMessages(prev => [...prev, userMessage]);
     setUserInput('');
     setIsLoadingAI(true);
+
+    const lower = trimmedInput.toLowerCase();
+    try {
+      if (lower.includes('анализ') || lower.includes('отчёт') || lower.includes('статист')) {
+        const allTasks: Task[] = await fetchUserTasks();
+        const now = new Date();
+        const weekAgo = subDays(now, 7);
+        const completed = allTasks.filter(t => t.isCompleted && t.completedAt && t.completedAt >= weekAgo.getTime());
+        const overdue = allTasks.filter(t => t.dueDate && !t.isCompleted && new Date(t.dueDate) < now);
+        let answer = `Отчёт за неделю:\n`;
+        answer += `Выполнено задач: ${completed.length}\n`;
+        answer += `Просрочено задач: ${overdue.length}\n`;
+        if (completed.length) answer += `\nВыполненные задачи:\n${completed.map(t => '• ' + t.text).join('\n')}`;
+        if (overdue.length) answer += `\nПросроченные задачи:\n${overdue.map(t => '• ' + t.text + (t.dueDate ? ' (до ' + t.dueDate + ')' : '')).join('\n')}`;
+        if (accessToken) {
+          const events = await listUpcomingEvents(accessToken, 50);
+          const pastWeekEvents = events.filter(e => {
+            const start = e.start?.dateTime ? new Date(e.start.dateTime) : null;
+            return start && start >= weekAgo && start <= now;
+          });
+          answer += `\n\nСобытий в календаре за неделю: ${pastWeekEvents.length}`;
+          if (pastWeekEvents.length) answer += `\n${pastWeekEvents.map(e => '• ' + e.summary + (e.start?.dateTime ? ' (' + e.start.dateTime.replace('T', ' ').slice(0, 16) + ')' : '')).join('\n')}`;
+        }
+        setChatMessages(prev => [...prev, {
+          id: crypto.randomUUID(),
+          sender: 'assistant',
+          text: answer,
+          timestamp: Date.now(),
+        }]);
+        return setIsLoadingAI(false);
+      }
+      if (lower.includes('задач') || lower.includes('дела') || lower.includes('todo')) {
+        const allTasks: Task[] = await fetchUserTasks();
+        const today = new Date();
+        const todayStr = today.toISOString().slice(0, 10);
+        const tasksToday = allTasks.filter(t => t.dueDate === todayStr && !t.isCompleted);
+        const overdue = allTasks.filter(t => t.dueDate && t.dueDate < todayStr && !t.isCompleted);
+        let answer = '';
+        if (lower.includes('сегодня')) {
+          answer = tasksToday.length
+            ? `Ваши задачи на сегодня:\n${tasksToday.map(t => '• ' + t.text).join('\n')}`
+            : 'На сегодня задач нет!';
+        } else if (lower.includes('просроч')) {
+          answer = overdue.length
+            ? `Просроченные задачи:\n${overdue.map(t => '• ' + t.text + (t.dueDate ? ' (до ' + t.dueDate + ')' : '')).join('\n')}`
+            : 'Просроченных задач нет!';
+        } else {
+          const active = allTasks.filter(t => !t.isCompleted);
+          answer = active.length
+            ? `Ваши текущие задачи:\n${active.map(t => '• ' + t.text + (t.dueDate ? ' (до ' + t.dueDate + ')' : '')).join('\n')}`
+            : 'У вас нет активных задач!';
+        }
+        setChatMessages(prev => [...prev, {
+          id: crypto.randomUUID(),
+          sender: 'assistant',
+          text: answer,
+          timestamp: Date.now(),
+        }]);
+        return setIsLoadingAI(false);
+      }
+      if ((lower.includes('встреч') || lower.includes('событ') || lower.includes('calendar') || lower.includes('календар')) && accessToken) {
+        const events = await listUpcomingEvents(accessToken, 10);
+        if (lower.includes('ближайш')) {
+          const next = events[0];
+          const answer = next
+            ? `Ближайшее событие: ${next.summary} (${next.start?.dateTime ? next.start.dateTime.replace('T', ' ').slice(0, 16) : 'дата неизвестна'})`
+            : 'Ближайших событий не найдено.';
+          setChatMessages(prev => [...prev, {
+            id: crypto.randomUUID(),
+            sender: 'assistant',
+            text: answer,
+            timestamp: Date.now(),
+          }]);
+          return setIsLoadingAI(false);
+        } else {
+          const answer = events.length
+            ? `Ваши ближайшие события:\n${events.map(e => '• ' + e.summary + (e.start?.dateTime ? ' (' + e.start.dateTime.replace('T', ' ').slice(0, 16) + ')' : '')).join('\n')}`
+            : 'Событий в календаре не найдено.';
+          setChatMessages(prev => [...prev, {
+            id: crypto.randomUUID(),
+            sender: 'assistant',
+            text: answer,
+            timestamp: Date.now(),
+          }]);
+          return setIsLoadingAI(false);
+        }
+      }
+    } catch (error) {
+      setChatMessages(prev => [...prev, {
+        id: crypto.randomUUID(),
+        sender: 'assistant',
+        text: 'Ошибка при анализе задач или событий.',
+        timestamp: Date.now(),
+      }]);
+      return setIsLoadingAI(false);
+    }
 
     try {
       const aiResponse = await getGoalBreakdown(trimmedInput);
