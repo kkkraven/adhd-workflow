@@ -68,7 +68,6 @@ const TodoList: React.FC = () => {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const datePickerButtonRef = useRef<HTMLButtonElement>(null);
   const { accessToken } = useGoogleAuth();
-  const [chatMessages, setChatMessages] = useLocalStorage('assistantChatMessages', []);
   const [showQuickInput, setShowQuickInput] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -266,7 +265,6 @@ const TodoList: React.FC = () => {
       text: `Разбей задачу на подзадачи: ${task.text}`,
       timestamp: Date.now(),
     };
-    setChatMessages((prev: any[]) => [...prev, userMessage]);
     // Можно добавить уведомление/toast
   };
 

@@ -1,9 +1,11 @@
+import { GoogleTask } from '../types';
+
 // Если нет типа GoogleTask, используем any (или импортируем из types)
 // import { GoogleTask } from '../types';
 // type GoogleTask = any;
 
 // Получение списка задач из Google Tasks
-export const listTasks = async (accessToken: string | null, taskListId = '@default'): Promise<any[]> => {
+export const listTasks = async (accessToken: string | null, taskListId = '@default'): Promise<GoogleTask[]> => {
   if (!accessToken) throw new Error('Нет accessToken для Google Tasks');
   if (!window.gapi || !window.gapi.client || !window.gapi.client.tasks) {
     throw new Error('Google Tasks API client не загружен');
